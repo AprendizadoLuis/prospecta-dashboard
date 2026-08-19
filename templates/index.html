@@ -1,0 +1,3367 @@
+<!DOCTYPE html>
+
+<html lang="pt-BR">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Prospecta ADS | Overview
+    </title>
+
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+
+        body {
+
+            margin: 0;
+
+            font-family:
+                Inter,
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                sans-serif;
+
+            background: #f5f7fb;
+
+            color: #102044;
+
+        }
+
+
+        /* ==================================================
+           LAYOUT
+        ================================================== */
+
+        .layout {
+
+            display: flex;
+
+            min-height: 100vh;
+
+        }
+
+
+        /* ==================================================
+           SIDEBAR
+        ================================================== */
+
+        .sidebar {
+
+            width: 220px;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #061a45 0%,
+                    #06245d 100%
+                );
+
+            color: white;
+
+            padding: 28px 14px;
+
+            position: fixed;
+
+            top: 0;
+
+            bottom: 0;
+
+            left: 0;
+
+        }
+
+
+        .brand {
+
+            text-align: center;
+
+            margin-bottom: 45px;
+
+        }
+
+
+        .brand-logo {
+
+            font-size: 36px;
+
+            font-weight: 800;
+
+            color: #1683ff;
+
+            margin-bottom: 3px;
+
+        }
+
+
+        .brand-name {
+
+            font-size: 21px;
+
+            letter-spacing: 4px;
+
+            font-weight: 600;
+
+        }
+
+
+        .brand-ads {
+
+            font-size: 10px;
+
+            letter-spacing: 3px;
+
+            color: #1683ff;
+
+            margin-top: 2px;
+
+        }
+
+
+        .menu {
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 7px;
+
+        }
+
+
+        .menu-item {
+
+            padding: 13px 14px;
+
+            border-radius: 11px;
+
+            color: #d7e1f5;
+
+            font-size: 15px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+        }
+
+
+        .menu-item.active {
+
+            background: #0969ed;
+
+            color: white;
+
+            box-shadow:
+                0 6px 18px
+                rgba(0, 105, 237, 0.30);
+
+        }
+
+
+        .menu-icon {
+
+            width: 22px;
+
+            text-align: center;
+
+            font-size: 17px;
+
+        }
+
+
+        /* ==================================================
+           MAIN
+        ================================================== */
+
+        .main {
+
+            margin-left: 220px;
+
+            width: calc(100% - 220px);
+
+            padding: 34px 30px;
+
+        }
+
+
+        /* ==================================================
+           TOPBAR
+        ================================================== */
+
+        .topbar {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: flex-start;
+
+            margin-bottom: 30px;
+
+            gap: 20px;
+
+        }
+
+
+        .title h1 {
+
+            margin: 0;
+
+            font-size: 31px;
+
+            letter-spacing: -0.7px;
+
+        }
+
+
+        .title p {
+
+            margin: 7px 0 0;
+
+            color: #74809a;
+
+            font-size: 14px;
+
+        }
+
+
+        .top-actions {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+
+        }
+
+
+        /* ==================================================
+           CALENDÁRIO
+        ================================================== */
+
+        .date-form {
+
+            margin: 0;
+
+        }
+
+
+        .date-box {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 9px;
+
+            background: white;
+
+            border: 1px solid #dce3f0;
+
+            border-radius: 10px;
+
+            padding: 7px 9px;
+
+        }
+
+
+        .date-box input {
+
+            border: none;
+
+            outline: none;
+
+            color: #243352;
+
+            font-family: inherit;
+
+            font-size: 13px;
+
+            cursor: pointer;
+
+            background: transparent;
+
+        }
+
+
+        .date-box span {
+
+            color: #8993a8;
+
+            font-size: 12px;
+
+        }
+
+
+        .date-box button {
+
+            border: none;
+
+            background: #0969ed;
+
+            color: white;
+
+            padding: 8px 13px;
+
+            border-radius: 7px;
+
+            font-family: inherit;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition: 0.2s;
+
+        }
+
+
+        .date-box button:hover {
+
+            background: #0759ca;
+
+        }
+
+
+        .updated {
+
+            font-size: 13px;
+
+            color: #6f7b94;
+
+            white-space: nowrap;
+
+        }
+
+
+        .updated strong {
+
+            color: #1582ff;
+
+        }
+
+
+        /* ==================================================
+           KPIs
+        ================================================== */
+
+        .kpis {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(5, 1fr);
+
+            gap: 18px;
+
+            margin-bottom: 22px;
+
+        }
+
+
+        .kpi {
+
+            background: white;
+
+            border: 1px solid #e6ebf4;
+
+            border-radius: 15px;
+
+            padding: 21px;
+
+            box-shadow:
+                0 4px 18px
+                rgba(19, 47, 89, 0.05);
+
+        }
+
+
+        .kpi-top {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            margin-bottom: 15px;
+
+        }
+
+
+        .kpi-icon {
+
+            width: 42px;
+
+            height: 42px;
+
+            border-radius: 50%;
+
+            background: #0969ed;
+
+            color: white;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 18px;
+
+        }
+
+
+        .kpi-label {
+
+            font-size: 13px;
+
+            color: #52617d;
+
+        }
+
+
+        .kpi-value {
+
+            font-size: 25px;
+
+            font-weight: 700;
+
+            letter-spacing: -0.5px;
+
+        }
+
+
+        /* ==================================================
+           PAINEL
+        ================================================== */
+
+        .panel {
+
+            background: white;
+
+            border: 1px solid #e5eaf3;
+
+            border-radius: 15px;
+
+            overflow: visible;
+
+            box-shadow:
+                0 4px 18px
+                rgba(19, 47, 89, 0.04);
+
+        }
+
+
+        .panel-header {
+
+            padding: 20px;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            border-bottom: 1px solid #e9edf5;
+
+            gap: 15px;
+
+        }
+
+
+        .panel-title {
+
+            font-size: 18px;
+
+            font-weight: 700;
+
+        }
+
+
+        .panel-subtitle {
+
+            color: #8993a8;
+
+            font-size: 12px;
+
+            margin-top: 4px;
+
+        }
+
+
+        .panel-controls {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+        }
+
+
+        .search {
+
+            width: 230px;
+
+            padding: 10px 13px;
+
+            border: 1px solid #dfe5ef;
+
+            border-radius: 9px;
+
+            outline: none;
+
+            font-size: 13px;
+
+        }
+
+
+        .search:focus {
+
+            border-color: #1683ff;
+
+        }
+
+
+        /* ==================================================
+           CONTROLE DE COLUNAS
+        ================================================== */
+
+        .columns-wrapper {
+
+            position: relative;
+
+        }
+
+
+        .columns-button {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            border: 1px solid #dfe5ef;
+
+            background: white;
+
+            color: #243352;
+
+            padding: 10px 13px;
+
+            border-radius: 9px;
+
+            font-family: inherit;
+
+            font-size: 13px;
+
+            cursor: pointer;
+
+            white-space: nowrap;
+
+        }
+
+
+        .columns-button:hover {
+
+            border-color: #1683ff;
+
+        }
+
+
+        .columns-menu {
+
+            display: none;
+
+            position: absolute;
+
+            right: 0;
+
+            top: calc(100% + 8px);
+
+            width: 270px;
+
+            background: white;
+
+            border: 1px solid #dfe5ef;
+
+            border-radius: 12px;
+
+            padding: 12px;
+
+            box-shadow:
+                0 12px 35px
+                rgba(20, 45, 90, 0.15);
+
+            z-index: 100;
+
+        }
+
+
+        .columns-menu.open {
+
+            display: block;
+
+        }
+
+
+        .columns-menu-title {
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .column-option {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 9px;
+
+            padding: 8px 6px;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+
+            font-size: 13px;
+
+        }
+
+
+        .column-option:hover {
+
+            background: #f5f8fd;
+
+        }
+
+
+        .column-option input {
+
+            accent-color: #0969ed;
+
+        }
+
+
+        .columns-reset {
+
+            width: 100%;
+
+            border: 1px solid #dfe5ef;
+
+            background: white;
+
+            padding: 8px;
+
+            margin-top: 8px;
+
+            border-radius: 7px;
+
+            cursor: pointer;
+
+            font-size: 12px;
+
+            color: #52617d;
+
+        }
+
+
+        .columns-reset:hover {
+
+            background: #f5f8fd;
+
+        }
+
+
+        /* ==================================================
+           ORDENAÇÃO
+        ================================================== */
+
+        th.sortable {
+
+            cursor: pointer;
+
+            user-select: none;
+
+            transition:
+                background 0.15s ease,
+                color 0.15s ease;
+
+        }
+
+
+        th.sortable:hover {
+
+            background: #eef4ff;
+
+            color: #0969ed;
+
+        }
+
+
+        th.sort-active {
+
+            color: #0969ed;
+
+            background: #f1f6ff;
+
+        }
+
+
+        .sort-icon {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            width: 14px;
+
+            height: 14px;
+
+            margin-left: 4px;
+
+            color: #9aa5b8;
+
+            font-size: 11px;
+
+            vertical-align: middle;
+
+        }
+
+
+        .sort-icon::before {
+
+            content: "↕";
+
+        }
+
+
+        th.sort-active .sort-icon {
+
+            color: #0969ed;
+
+        }
+
+
+        th.sort-asc .sort-icon::before {
+
+            content: "↑";
+
+        }
+
+
+        th.sort-desc .sort-icon::before {
+
+            content: "↓";
+
+        }
+
+
+        /* ==================================================
+           TABELA
+        ================================================== */
+
+        .table-wrapper {
+
+            overflow-x: auto;
+
+            border-radius:
+                0 0 15px 15px;
+
+        }
+
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 900px;
+
+        }
+
+
+        th {
+
+            text-align: left;
+
+            padding: 13px 18px;
+
+            background: #f8faff;
+
+            color: #243352;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            white-space: nowrap;
+
+        }
+
+
+        td {
+
+            padding: 15px 18px;
+
+            border-top: 1px solid #edf0f5;
+
+            font-size: 13px;
+
+            white-space: nowrap;
+
+        }
+
+
+        tr:hover td {
+
+            background: #fbfcff;
+
+        }
+
+
+        .client {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 11px;
+
+        }
+
+
+        .avatar {
+
+            width: 36px;
+
+            height: 36px;
+
+            border-radius: 50%;
+
+            background: #102b62;
+
+            color: white;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 12px;
+
+            font-weight: 700;
+
+            flex-shrink: 0;
+
+        }
+
+
+        .client-name {
+
+            font-weight: 700;
+
+            color: #15254a;
+
+        }
+
+
+        .account-id {
+
+            color: #8a94a8;
+
+            font-size: 11px;
+
+            margin-top: 3px;
+
+        }
+
+
+        /* ==================================================
+           STATUS
+        ================================================== */
+
+        .status {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 6px;
+
+            padding: 6px 10px;
+
+            border-radius: 20px;
+
+            font-size: 11px;
+
+            font-weight: 600;
+
+        }
+
+
+        .status.healthy {
+
+            background: #eaf8f0;
+
+            color: #168448;
+
+        }
+
+
+        .status.warning {
+
+            background: #fff5df;
+
+            color: #bd7410;
+
+        }
+
+
+        .status.critical {
+
+            background: #fff0f0;
+
+            color: #d43838;
+
+        }
+
+
+        .metric-danger {
+
+            color: #dc3c42;
+
+            font-weight: 600;
+
+        }
+
+
+        .metric-good {
+
+            color: #13864a;
+
+            font-weight: 600;
+
+        }
+
+
+        .alert {
+
+            font-size: 18px;
+
+        }
+
+
+        /* ==================================================
+           RESUMO
+        ================================================== */
+
+        .bottom {
+
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 18px;
+
+            margin-top: 18px;
+
+        }
+
+
+        .summary {
+
+            background: white;
+
+            border: 1px solid #e5eaf3;
+
+            border-radius: 15px;
+
+            padding: 22px;
+
+        }
+
+
+        .summary-title {
+
+            font-weight: 700;
+
+            margin-bottom: 18px;
+
+        }
+
+
+        .summary-items {
+
+            display: flex;
+
+            gap: 45px;
+
+        }
+
+
+        .summary-item strong {
+
+            display: block;
+
+            font-size: 27px;
+
+        }
+
+
+        .summary-item span {
+
+            color: #78839a;
+
+            font-size: 12px;
+
+        }
+
+
+        /* ==================================================
+           ERRO
+        ================================================== */
+
+        .error-box {
+
+            background: #fff0f0;
+
+            border: 1px solid #ffcaca;
+
+            color: #b52d2d;
+
+            padding: 15px 18px;
+
+            border-radius: 10px;
+
+            margin-bottom: 20px;
+
+            font-size: 13px;
+
+        }
+
+
+        /* ==================================================
+           RESPONSIVO
+        ================================================== */
+
+        @media (max-width: 1400px) {
+
+            .kpis {
+
+                grid-template-columns:
+                    repeat(3, 1fr);
+
+            }
+
+        }
+
+
+        @media (max-width: 1050px) {
+
+            .topbar {
+
+                flex-direction: column;
+
+            }
+
+
+            .top-actions {
+
+                flex-wrap: wrap;
+
+            }
+
+
+            .panel-header {
+
+                flex-direction: column;
+
+                align-items: flex-start;
+
+            }
+
+
+            .panel-controls {
+
+                width: 100%;
+
+                flex-wrap: wrap;
+
+            }
+
+
+            .search {
+
+                width: 100%;
+
+            }
+
+
+            .bottom {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+        }
+
+
+        @media (max-width: 800px) {
+
+            .sidebar {
+
+                display: none;
+
+            }
+
+
+            .main {
+
+                margin-left: 0;
+
+                width: 100%;
+
+                padding: 20px;
+
+            }
+
+
+            .kpis {
+
+                grid-template-columns:
+                    repeat(2, 1fr);
+
+            }
+
+        }
+
+
+        @media (max-width: 550px) {
+
+            .kpis {
+
+                grid-template-columns:
+                    1fr;
+
+            }
+
+
+            .date-box {
+
+                flex-wrap: wrap;
+
+            }
+
+
+            .summary-items {
+
+                flex-wrap: wrap;
+
+                gap: 25px;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="layout">
+
+
+    <!-- ==================================================
+         SIDEBAR
+    ================================================== -->
+
+    <aside class="sidebar">
+
+
+        <div class="brand">
+
+
+            <div class="brand-logo">
+                P
+            </div>
+
+
+            <div class="brand-name">
+                PROSPECTE
+            </div>
+
+
+            <div class="brand-ads">
+                ADS
+            </div>
+
+
+        </div>
+
+
+        <div class="menu">
+
+
+            <div class="menu-item active">
+
+                <span class="menu-icon">
+                    ⌂
+                </span>
+
+                Overview
+
+            </div>
+
+
+            <div class="menu-item">
+
+                <span class="menu-icon">
+                    ♙
+                </span>
+
+                Clientes
+
+            </div>
+
+
+            <div class="menu-item">
+
+                <span class="menu-icon">
+                    ◇
+                </span>
+
+                Campanhas
+
+            </div>
+
+
+            <div class="menu-item">
+
+                <span class="menu-icon">
+                    ▷
+                </span>
+
+                Anúncios
+
+            </div>
+
+
+            <div class="menu-item">
+
+                <span class="menu-icon">
+                    ▤
+                </span>
+
+                Relatórios
+
+            </div>
+
+
+            <div class="menu-item">
+
+                <span class="menu-icon">
+                    ♧
+                </span>
+
+                Alertas
+
+            </div>
+
+
+            <div class="menu-item">
+
+                <span class="menu-icon">
+                    ✓
+                </span>
+
+                Metas
+
+            </div>
+
+
+            <div class="menu-item">
+
+                <span class="menu-icon">
+                    ⚙
+                </span>
+
+                Configurações
+
+            </div>
+
+
+        </div>
+
+
+    </aside>
+
+
+    <!-- ==================================================
+         MAIN
+    ================================================== -->
+
+    <main class="main">
+
+
+        <!-- ==================================================
+             TOPBAR
+        ================================================== -->
+
+        <div class="topbar">
+
+
+            <div class="title">
+
+
+                <h1>
+                    Overview de Clientes
+                </h1>
+
+
+                <p>
+                    Visão geral de performance de todas as contas na Meta Ads.
+                </p>
+
+
+            </div>
+
+
+            <div class="top-actions">
+
+
+                <!-- ==========================================
+                     PERÍODO
+                =========================================== -->
+
+                <form
+                    class="date-form"
+                    method="GET"
+                    action="/"
+                >
+
+
+                    <div class="date-box">
+
+
+                        <input
+                            type="date"
+                            name="since"
+                            value="{{ since }}"
+                            aria-label="Data inicial"
+                        >
+
+
+                        <span>
+                            até
+                        </span>
+
+
+                        <input
+                            type="date"
+                            name="until"
+                            value="{{ until }}"
+                            aria-label="Data final"
+                        >
+
+
+                        <button
+                            type="submit"
+                        >
+                            Aplicar
+                        </button>
+
+
+                    </div>
+
+
+                </form>
+
+
+                <div class="updated">
+
+
+                    <strong>
+                        ↻
+                    </strong>
+
+
+                    {{ period_label }}
+
+
+                </div>
+
+
+            </div>
+
+
+        </div>
+
+
+        <!-- ==================================================
+             ERRO
+        ================================================== -->
+
+        {% if error %}
+
+
+        <div class="error-box">
+
+
+            Não foi possível consultar as contas da Meta.
+
+
+            <br>
+            <br>
+
+
+            {{ error }}
+
+
+        </div>
+
+
+        {% endif %}
+
+
+        <!-- ==================================================
+             KPIS
+        ================================================== -->
+
+        <section class="kpis">
+
+
+            <!-- ==============================================
+                 VALOR GASTO
+            =============================================== -->
+
+            <div class="kpi">
+
+
+                <div class="kpi-top">
+
+
+                    <div class="kpi-icon">
+                        $
+                    </div>
+
+
+                    <div class="kpi-label">
+                        Valor Gasto
+                    </div>
+
+
+                </div>
+
+
+                <div class="kpi-value">
+
+
+                    R$
+                    {{ "%.2f"|format(total_spend) }}
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ==============================================
+                 CONVERSAS
+            =============================================== -->
+
+            <div class="kpi">
+
+
+                <div class="kpi-top">
+
+
+                    <div class="kpi-icon">
+                        ◉
+                    </div>
+
+
+                    <div class="kpi-label">
+                        Conversas iniciadas
+                    </div>
+
+
+                </div>
+
+
+                <div class="kpi-value">
+
+
+                    {{
+                        "{:,.0f}".format(
+                            total_conversations
+                        ).replace(",", ".")
+                    }}
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ==============================================
+                 CUSTO
+            =============================================== -->
+
+            <div class="kpi">
+
+
+                <div class="kpi-top">
+
+
+                    <div class="kpi-icon">
+                        $
+                    </div>
+
+
+                    <div class="kpi-label">
+                        Custo por conversa
+                    </div>
+
+
+                </div>
+
+
+                <div class="kpi-value">
+
+
+                    R$
+
+                    {{
+                        "%.2f"|format(
+                            average_cost_per_conversation
+                        )
+                    }}
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ==============================================
+                 CTR
+            =============================================== -->
+
+            <div class="kpi">
+
+
+                <div class="kpi-top">
+
+
+                    <div class="kpi-icon">
+                        %
+                    </div>
+
+
+                    <div class="kpi-label">
+                        CTR Médio
+                    </div>
+
+
+                </div>
+
+
+                <div class="kpi-value">
+
+
+                    {{ "%.2f"|format(average_ctr) }}%
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ==============================================
+                 CPM
+            =============================================== -->
+
+            <div class="kpi">
+
+
+                <div class="kpi-top">
+
+
+                    <div class="kpi-icon">
+                        ◉
+                    </div>
+
+
+                    <div class="kpi-label">
+                        CPM Médio
+                    </div>
+
+
+                </div>
+
+
+                <div class="kpi-value">
+
+
+                    R$
+                    {{ "%.2f"|format(average_cpm) }}
+
+
+                </div>
+
+
+            </div>
+
+
+        </section>
+
+
+        <!-- ==================================================
+             TABELA
+        ================================================== -->
+
+        <section class="panel">
+
+
+            <div class="panel-header">
+
+
+                <div>
+
+
+                    <div class="panel-title">
+                        Performance por Cliente
+                    </div>
+
+
+                    <div class="panel-subtitle">
+                        Clique no nome de uma coluna para ordenar os clientes.
+                    </div>
+
+
+                </div>
+
+
+                <div class="panel-controls">
+
+
+                    <!-- BUSCA -->
+
+                    <input
+                        class="search"
+                        id="search"
+                        type="text"
+                        placeholder="Buscar cliente..."
+                    >
+
+
+                    <!-- ======================================
+                         COLUNAS
+                    ======================================= -->
+
+                    <div class="columns-wrapper">
+
+
+                        <button
+                            type="button"
+                            class="columns-button"
+                            id="columnsButton"
+                        >
+
+
+                            ⚙
+
+
+                            Colunas
+
+
+                            <span>
+                                ▾
+                            </span>
+
+
+                        </button>
+
+
+                        <div
+                            class="columns-menu"
+                            id="columnsMenu"
+                        >
+
+
+                            <div class="columns-menu-title">
+
+                                Escolha as métricas
+
+                            </div>
+
+
+                            <!-- VALOR GASTO -->
+
+                            <label class="column-option">
+
+
+                                <input
+                                    type="checkbox"
+                                    data-column="spend"
+                                    checked
+                                >
+
+
+                                Valor gasto
+
+
+                            </label>
+
+
+                            <!-- CONVERSAS -->
+
+                            <label class="column-option">
+
+
+                                <input
+                                    type="checkbox"
+                                    data-column="conversations"
+                                    checked
+                                >
+
+
+                                Conversas iniciadas
+
+
+                            </label>
+
+
+                            <!-- CUSTO -->
+
+                            <label class="column-option">
+
+
+                                <input
+                                    type="checkbox"
+                                    data-column="cost_per_conversation"
+                                    checked
+                                >
+
+
+                                Custo por conversa
+
+
+                            </label>
+
+
+                            <!-- IMPRESSÕES -->
+
+                            <label class="column-option">
+
+
+                                <input
+                                    type="checkbox"
+                                    data-column="impressions"
+                                >
+
+
+                                Impressões
+
+
+                            </label>
+
+
+                            <!-- ALCANCE -->
+
+                            <label class="column-option">
+
+
+                                <input
+                                    type="checkbox"
+                                    data-column="reach"
+                                >
+
+
+                                Alcance
+
+
+                            </label>
+
+
+                            <!-- CLIQUES -->
+
+                            <label class="column-option">
+
+
+                                <input
+                                    type="checkbox"
+                                    data-column="link_clicks"
+                                >
+
+
+                                Cliques no link
+
+
+                            </label>
+
+
+                            <!-- CTR -->
+
+                            <label class="column-option">
+
+
+                                <input
+                                    type="checkbox"
+                                    data-column="ctr"
+                                    checked
+                                >
+
+
+                                CTR
+
+
+                            </label>
+
+
+                            <!-- CPM -->
+
+                            <label class="column-option">
+
+
+                                <input
+                                    type="checkbox"
+                                    data-column="cpm"
+                                    checked
+                                >
+
+
+                                CPM
+
+
+                            </label>
+
+
+                            <button
+                                type="button"
+                                class="columns-reset"
+                                id="columnsReset"
+                            >
+
+                                Restaurar padrão
+
+                            </button>
+
+
+                        </div>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- ==================================================
+                 TABLE
+            ================================================== -->
+
+            <div class="table-wrapper">
+
+
+                <table id="clientTable">
+
+
+                    <thead>
+
+
+                        <tr>
+
+
+                            <!-- CLIENTE -->
+
+                            <th
+                                class="sortable"
+                                data-sort="name"
+                            >
+
+
+                                Cliente
+
+
+                                <span
+                                    class="sort-icon"
+                                ></span>
+
+
+                            </th>
+
+
+                            <!-- STATUS -->
+
+                            <th>
+                                Status
+                            </th>
+
+
+                            <!-- VALOR GASTO -->
+
+                            <th
+                                class="sortable"
+                                data-sort="spend"
+                            >
+
+
+                                Valor gasto
+
+
+                                <span
+                                    class="sort-icon"
+                                ></span>
+
+
+                            </th>
+
+
+                            <!-- CONVERSAS -->
+
+                            <th
+                                class="sortable"
+                                data-sort="conversations"
+                                data-column="conversations"
+                            >
+
+
+                                Conversas iniciadas
+
+
+                                <span
+                                    class="sort-icon"
+                                ></span>
+
+
+                            </th>
+
+
+                            <!-- CUSTO -->
+
+                            <th
+                                class="sortable"
+                                data-sort="cost_per_conversation"
+                                data-column="cost_per_conversation"
+                            >
+
+
+                                Custo por conversa
+
+
+                                <span
+                                    class="sort-icon"
+                                ></span>
+
+
+                            </th>
+
+
+                            <!-- IMPRESSÕES -->
+
+                            <th
+                                class="sortable"
+                                data-sort="impressions"
+                                data-column="impressions"
+                            >
+
+
+                                Impressões
+
+
+                                <span
+                                    class="sort-icon"
+                                ></span>
+
+
+                            </th>
+
+
+                            <!-- ALCANCE -->
+
+                            <th
+                                class="sortable"
+                                data-sort="reach"
+                                data-column="reach"
+                            >
+
+
+                                Alcance
+
+
+                                <span
+                                    class="sort-icon"
+                                ></span>
+
+
+                            </th>
+
+
+                            <!-- CLIQUES -->
+
+                            <th
+                                class="sortable"
+                                data-sort="link_clicks"
+                                data-column="link_clicks"
+                            >
+
+
+                                Cliques no link
+
+
+                                <span
+                                    class="sort-icon"
+                                ></span>
+
+
+                            </th>
+
+
+                            <!-- CTR -->
+
+                            <th
+                                class="sortable"
+                                data-sort="ctr"
+                                data-column="ctr"
+                            >
+
+
+                                CTR
+
+
+                                <span
+                                    class="sort-icon"
+                                ></span>
+
+
+                            </th>
+
+
+                            <!-- CPM -->
+
+                            <th
+                                class="sortable"
+                                data-sort="cpm"
+                                data-column="cpm"
+                            >
+
+
+                                CPM
+
+
+                                <span
+                                    class="sort-icon"
+                                ></span>
+
+
+                            </th>
+
+
+                            <!-- ALERTA -->
+
+                            <th>
+                                Alerta
+                            </th>
+
+
+                        </tr>
+
+
+                    </thead>
+
+
+                    <tbody>
+
+
+                    {% for account in accounts %}
+
+
+                        <tr>
+
+
+                            <!-- ==================================
+                                 CLIENTE
+                            =================================== -->
+
+                            <td
+                                data-sort-field="name"
+                                data-sort-value="{{ account.name }}"
+                            >
+
+
+                                <div class="client">
+
+
+                                    <div class="avatar">
+
+
+                                        {{ account.name[:2].upper() }}
+
+
+                                    </div>
+
+
+                                    <div>
+
+
+                                        <div class="client-name">
+
+
+                                            {{ account.name }}
+
+
+                                        </div>
+
+
+                                        <div class="account-id">
+
+
+                                            {{ account.account_id }}
+
+
+                                        </div>
+
+
+                                    </div>
+
+
+                                </div>
+
+
+                            </td>
+
+
+                            <!-- ==================================
+                                 STATUS
+                            =================================== -->
+
+                            <td>
+
+
+                                <span
+                                    class="
+                                        status
+                                        {{ account.status.class }}
+                                    "
+                                >
+
+
+                                    {% if account.status.class == "healthy" %}
+
+                                        ●
+
+
+                                    {% elif account.status.class == "warning" %}
+
+                                        !
+
+
+                                    {% else %}
+
+                                        !
+
+
+                                    {% endif %}
+
+
+                                    {{ account.status.label }}
+
+
+                                </span>
+
+
+                            </td>
+
+
+                            <!-- ==================================
+                                 VALOR GASTO
+                            =================================== -->
+
+                            <td
+                                data-sort-field="spend"
+                                data-sort-value="{{ account.spend }}"
+                            >
+
+
+                                R$
+
+                                {{ "%.2f"|format(
+                                    account.spend
+                                ) }}
+
+
+                            </td>
+
+
+                            <!-- ==================================
+                                 CONVERSAS
+                            =================================== -->
+
+                            <td
+                                data-column="conversations"
+                                data-sort-field="conversations"
+                                data-sort-value="{{ account.conversations }}"
+                            >
+
+
+                                {{
+                                    "{:,.0f}".format(
+                                        account.conversations
+                                    ).replace(",", ".")
+                                }}
+
+
+                            </td>
+
+
+                            <!-- ==================================
+                                 CUSTO POR CONVERSA
+                            =================================== -->
+
+                            <td
+                                data-column="cost_per_conversation"
+                                data-sort-field="cost_per_conversation"
+                                data-sort-value="{{ account.cost_per_conversation }}"
+                                class="
+                                    {% if account.status.class == 'critical' %}
+                                        metric-danger
+                                    {% elif account.status.class == 'healthy' %}
+                                        metric-good
+                                    {% endif %}
+                                "
+                            >
+
+
+                                R$
+
+
+                                {{
+                                    "%.2f"|format(
+                                        account.cost_per_conversation
+                                    )
+                                }}
+
+
+                            </td>
+
+
+                            <!-- ==================================
+                                 IMPRESSÕES
+                            =================================== -->
+
+                            <td
+                                data-column="impressions"
+                                data-sort-field="impressions"
+                                data-sort-value="{{ account.impressions }}"
+                            >
+
+
+                                {{
+                                    "{:,.0f}".format(
+                                        account.impressions
+                                    ).replace(",", ".")
+                                }}
+
+
+                            </td>
+
+
+                            <!-- ==================================
+                                 ALCANCE
+                            =================================== -->
+
+                            <td
+                                data-column="reach"
+                                data-sort-field="reach"
+                                data-sort-value="{{ account.reach }}"
+                            >
+
+
+                                {{
+                                    "{:,.0f}".format(
+                                        account.reach
+                                    ).replace(",", ".")
+                                }}
+
+
+                            </td>
+
+
+                            <!-- ==================================
+                                 CLIQUES
+                            =================================== -->
+
+                            <td
+                                data-column="link_clicks"
+                                data-sort-field="link_clicks"
+                                data-sort-value="{{ account.link_clicks }}"
+                            >
+
+
+                                {{
+                                    "{:,.0f}".format(
+                                        account.link_clicks
+                                    ).replace(",", ".")
+                                }}
+
+
+                            </td>
+
+
+                            <!-- ==================================
+                                 CTR
+                            =================================== -->
+
+                            <td
+                                data-column="ctr"
+                                data-sort-field="ctr"
+                                data-sort-value="{{ account.ctr }}"
+                                class="
+                                    {% if account.ctr < average_ctr * 0.75 %}
+                                        metric-danger
+                                    {% elif account.ctr >= average_ctr %}
+                                        metric-good
+                                    {% endif %}
+                                "
+                            >
+
+
+                                {{ "%.2f"|format(
+                                    account.ctr
+                                ) }}%
+
+
+                            </td>
+
+
+                            <!-- ==================================
+                                 CPM
+                            =================================== -->
+
+                            <td
+                                data-column="cpm"
+                                data-sort-field="cpm"
+                                data-sort-value="{{ account.cpm }}"
+                                class="
+                                    {% if account.cpm > average_cpm * 1.30 %}
+                                        metric-danger
+                                    {% elif account.cpm <= average_cpm %}
+                                        metric-good
+                                    {% endif %}
+                                "
+                            >
+
+
+                                R$
+
+
+                                {{ "%.2f"|format(
+                                    account.cpm
+                                ) }}
+
+
+                            </td>
+
+
+                            <!-- ==================================
+                                 ALERTA
+                            =================================== -->
+
+                            <td>
+
+
+                                <span class="alert">
+
+
+                                    {% if account.status.class == "critical" %}
+
+                                        ⚠
+
+
+                                    {% elif account.status.class == "warning" %}
+
+                                        !
+
+
+                                    {% else %}
+
+                                        ✓
+
+
+                                    {% endif %}
+
+
+                                </span>
+
+
+                            </td>
+
+
+                        </tr>
+
+
+                    {% endfor %}
+
+
+                    </tbody>
+
+
+                </table>
+
+
+            </div>
+
+
+        </section>
+
+
+        <!-- ==================================================
+             RESUMO
+        ================================================== -->
+
+        <section class="bottom">
+
+
+            <!-- CONTAS -->
+
+            <div class="summary">
+
+
+                <div class="summary-title">
+
+                    Resumo das contas
+
+                </div>
+
+
+                <div class="summary-items">
+
+
+                    <div class="summary-item">
+
+
+                        <strong>
+
+                            {{ accounts|length }}
+
+                        </strong>
+
+
+                        <span>
+
+                            Contas ativas
+
+                        </span>
+
+
+                    </div>
+
+
+                    <div class="summary-item">
+
+
+                        <strong>
+
+                            {{ critical_count }}
+
+                        </strong>
+
+
+                        <span>
+
+                            Em alerta crítico
+
+                        </span>
+
+
+                    </div>
+
+
+                    <div class="summary-item">
+
+
+                        <strong>
+
+                            {{ warning_count }}
+
+                        </strong>
+
+
+                        <span>
+
+                            Em atenção
+
+                        </span>
+
+
+                    </div>
+
+
+                </div>
+
+
+            </div>
+
+
+            <!-- DICA -->
+
+            <div class="summary">
+
+
+                <div class="summary-title">
+
+                    Dica Prospecta
+
+                </div>
+
+
+                <p
+                    style="
+                        margin: 0;
+                        color: #6d7890;
+                        font-size: 13px;
+                        line-height: 1.6;
+                    "
+                >
+
+
+                    {{ critical_count }}
+
+                    conta(s) estão em situação crítica.
+
+                    Revise campanhas, criativos e orçamento
+                    dessas contas.
+
+
+                </p>
+
+
+            </div>
+
+
+        </section>
+
+
+    </main>
+
+
+</div>
+
+
+<!-- ======================================================
+     JAVASCRIPT
+====================================================== -->
+
+<script>
+
+
+    /* ======================================================
+       ELEMENTOS
+    ====================================================== */
+
+    const table =
+        document.getElementById(
+            "clientTable"
+        );
+
+
+    const tbody =
+        table.querySelector(
+            "tbody"
+        );
+
+
+    const searchInput =
+        document.getElementById(
+            "search"
+        );
+
+
+    const originalRows =
+        Array.from(
+            tbody.querySelectorAll("tr")
+        );
+
+
+    /* ======================================================
+       ESTADO DA ORDENAÇÃO
+    ====================================================== */
+
+    let currentSort = null;
+
+    let currentDirection = null;
+
+
+    /* ======================================================
+       PEGAR VALOR DA LINHA
+    ====================================================== */
+
+    function getRowValue(
+        row,
+        column
+    ) {
+
+
+        const cell =
+            row.querySelector(
+                `[data-sort-field="${column}"]`
+            );
+
+
+        if (!cell) {
+
+            return "";
+
+        }
+
+
+        const value =
+            cell.dataset.sortValue;
+
+
+        /* CLIENTE */
+
+        if (column === "name") {
+
+            return value
+                .toLowerCase()
+                .trim();
+
+        }
+
+
+        /* NÚMEROS */
+
+        const number =
+            parseFloat(value);
+
+
+        return Number.isNaN(
+            number
+        )
+            ? 0
+            : number;
+
+    }
+
+
+    /* ======================================================
+       ORDENAR
+    ====================================================== */
+
+    function sortTable(
+        column
+    ) {
+
+
+        /*
+            Se clicar novamente
+            na mesma coluna,
+            inverte a direção.
+        */
+
+        if (
+            currentSort === column
+        ) {
+
+
+            if (
+                currentDirection === "desc"
+            ) {
+
+                currentDirection = "asc";
+
+            }
+
+
+            else if (
+                currentDirection === "asc"
+            ) {
+
+
+                /*
+                    Terceiro clique:
+                    volta à ordem original.
+                */
+
+                currentSort = null;
+
+                currentDirection = null;
+
+
+                renderOriginalOrder();
+
+
+                updateSortIcons();
+
+
+                return;
+
+            }
+
+
+        }
+
+
+        else {
+
+
+            /*
+                Primeira vez clicando:
+                maior para menor.
+            */
+
+            currentSort = column;
+
+            currentDirection = "desc";
+
+        }
+
+
+        const rows =
+            Array.from(
+                tbody.querySelectorAll("tr")
+            );
+
+
+        rows.sort(
+            function (
+                a,
+                b
+            ) {
+
+
+                const valueA =
+                    getRowValue(
+                        a,
+                        column
+                    );
+
+
+                const valueB =
+                    getRowValue(
+                        b,
+                        column
+                    );
+
+
+                /*
+                    TEXTO
+                */
+
+                if (
+                    typeof valueA === "string"
+                    &&
+                    typeof valueB === "string"
+                ) {
+
+
+                    return currentDirection === "asc"
+
+                        ? valueA.localeCompare(
+                            valueB,
+                            "pt-BR"
+                        )
+
+                        : valueB.localeCompare(
+                            valueA,
+                            "pt-BR"
+                        );
+
+                }
+
+
+                /*
+                    NÚMERO
+                */
+
+                return currentDirection === "asc"
+
+                    ? valueA - valueB
+
+                    : valueB - valueA;
+
+            }
+        );
+
+
+        rows.forEach(
+            function (row) {
+
+                tbody.appendChild(
+                    row
+                );
+
+            }
+        );
+
+
+        updateSortIcons();
+
+
+    }
+
+
+    /* ======================================================
+       ORDEM ORIGINAL
+    ====================================================== */
+
+    function renderOriginalOrder() {
+
+
+        originalRows.forEach(
+            function (row) {
+
+                tbody.appendChild(
+                    row
+                );
+
+            }
+        );
+
+
+    }
+
+
+    /* ======================================================
+       ATUALIZAR ÍCONES
+    ====================================================== */
+
+    function updateSortIcons() {
+
+
+        document
+            .querySelectorAll(
+                "th.sortable"
+            )
+            .forEach(
+                function (header) {
+
+
+                    header.classList.remove(
+                        "sort-active",
+                        "sort-asc",
+                        "sort-desc"
+                    );
+
+
+                }
+            );
+
+
+        if (!currentSort) {
+
+            return;
+
+        }
+
+
+        const activeHeader =
+            document.querySelector(
+                `th[data-sort="${currentSort}"]`
+            );
+
+
+        if (!activeHeader) {
+
+            return;
+
+        }
+
+
+        activeHeader.classList.add(
+            "sort-active"
+        );
+
+
+        if (
+            currentDirection === "asc"
+        ) {
+
+
+            activeHeader.classList.add(
+                "sort-asc"
+            );
+
+
+        }
+
+
+        if (
+            currentDirection === "desc"
+        ) {
+
+
+            activeHeader.classList.add(
+                "sort-desc"
+            );
+
+
+        }
+
+
+    }
+
+
+    /* ======================================================
+       CLIQUE NOS CABEÇALHOS
+    ====================================================== */
+
+    document
+        .querySelectorAll(
+            "th.sortable"
+        )
+        .forEach(
+            function (header) {
+
+
+                header.addEventListener(
+                    "click",
+                    function () {
+
+
+                        const column =
+                            this.dataset.sort;
+
+
+                        sortTable(
+                            column
+                        );
+
+
+                    }
+                );
+
+
+            }
+        );
+
+
+    /* ======================================================
+       BUSCA
+    ====================================================== */
+
+    searchInput.addEventListener(
+        "input",
+        function () {
+
+
+            const filter =
+                this.value
+                    .toLowerCase()
+                    .trim();
+
+
+            const rows =
+                tbody.querySelectorAll(
+                    "tr"
+                );
+
+
+            rows.forEach(
+                function (row) {
+
+
+                    const text =
+                        row.textContent
+                            .toLowerCase();
+
+
+                    row.style.display =
+                        text.includes(
+                            filter
+                        )
+                            ? ""
+                            : "none";
+
+
+                }
+            );
+
+
+        }
+    );
+
+
+    /* ======================================================
+       MENU DE COLUNAS
+    ====================================================== */
+
+    const columnsButton =
+        document.getElementById(
+            "columnsButton"
+        );
+
+
+    const columnsMenu =
+        document.getElementById(
+            "columnsMenu"
+        );
+
+
+    columnsButton.addEventListener(
+        "click",
+        function (event) {
+
+
+            event.stopPropagation();
+
+
+            columnsMenu.classList.toggle(
+                "open"
+            );
+
+
+        }
+    );
+
+
+    /* ======================================================
+       FECHAR MENU
+    ====================================================== */
+
+    document.addEventListener(
+        "click",
+        function (event) {
+
+
+            if (
+
+                !columnsMenu.contains(
+                    event.target
+                )
+
+                &&
+
+                !columnsButton.contains(
+                    event.target
+                )
+
+            ) {
+
+
+                columnsMenu.classList.remove(
+                    "open"
+                );
+
+
+            }
+
+
+        }
+    );
+
+
+    /* ======================================================
+       CHECKBOXES DAS COLUNAS
+    ====================================================== */
+
+    const columnCheckboxes =
+        document.querySelectorAll(
+            ".column-option input"
+        );
+
+
+    /* ======================================================
+       ATUALIZAR COLUNAS
+    ====================================================== */
+
+    function updateColumns() {
+
+
+        columnCheckboxes.forEach(
+            function (checkbox) {
+
+
+                const column =
+                    checkbox.dataset.column;
+
+
+                const visible =
+                    checkbox.checked;
+
+
+                document
+                    .querySelectorAll(
+                        `[data-column="${column}"]`
+                    )
+                    .forEach(
+                        function (element) {
+
+
+                            element.style.display =
+                                visible
+                                    ? ""
+                                    : "none";
+
+
+                        }
+                    );
+
+
+            }
+        );
+
+
+        saveColumnSettings();
+
+
+    }
+
+
+    /* ======================================================
+       SALVAR COLUNAS
+    ====================================================== */
+
+    function saveColumnSettings() {
+
+
+        const settings = {};
+
+
+        columnCheckboxes.forEach(
+            function (checkbox) {
+
+
+                settings[
+                    checkbox.dataset.column
+                ] =
+                    checkbox.checked;
+
+
+            }
+        );
+
+
+        localStorage.setItem(
+
+            "prospecta_dashboard_columns",
+
+            JSON.stringify(
+                settings
+            )
+
+        );
+
+
+    }
+
+
+    /* ======================================================
+       CARREGAR COLUNAS
+    ====================================================== */
+
+    function loadColumnSettings() {
+
+
+        const saved =
+            localStorage.getItem(
+                "prospecta_dashboard_columns"
+            );
+
+
+        if (!saved) {
+
+
+            updateColumns();
+
+
+            return;
+
+
+        }
+
+
+        try {
+
+
+            const settings =
+                JSON.parse(
+                    saved
+                );
+
+
+            columnCheckboxes.forEach(
+                function (checkbox) {
+
+
+                    const column =
+                        checkbox.dataset.column;
+
+
+                    if (
+                        Object.prototype.hasOwnProperty.call(
+                            settings,
+                            column
+                        )
+                    ) {
+
+
+                        checkbox.checked =
+                            settings[column];
+
+
+                    }
+
+
+                }
+            );
+
+
+        }
+
+
+        catch (error) {
+
+
+            console.error(
+
+                "Erro ao carregar configuração das colunas:",
+
+                error
+
+            );
+
+
+        }
+
+
+        updateColumns();
+
+
+    }
+
+
+    /* ======================================================
+       EVENTO DOS CHECKBOXES
+    ====================================================== */
+
+    columnCheckboxes.forEach(
+        function (checkbox) {
+
+
+            checkbox.addEventListener(
+                "change",
+                updateColumns
+            );
+
+
+        }
+    );
+
+
+    /* ======================================================
+       RESTAURAR PADRÃO
+    ====================================================== */
+
+    const columnsReset =
+        document.getElementById(
+            "columnsReset"
+        );
+
+
+    columnsReset.addEventListener(
+        "click",
+        function () {
+
+
+            localStorage.removeItem(
+                "prospecta_dashboard_columns"
+            );
+
+
+            columnCheckboxes.forEach(
+                function (checkbox) {
+
+
+                    const column =
+                        checkbox.dataset.column;
+
+
+                    checkbox.checked =
+                        [
+
+                            "spend",
+
+                            "conversations",
+
+                            "cost_per_conversation",
+
+                            "ctr",
+
+                            "cpm"
+
+                        ].includes(
+                            column
+                        );
+
+
+                }
+            );
+
+
+            updateColumns();
+
+
+        }
+    );
+
+
+    /* ======================================================
+       INICIALIZAÇÃO
+    ====================================================== */
+
+    loadColumnSettings();
+
+
+</script>
+
+
+</body>
+
+</html>

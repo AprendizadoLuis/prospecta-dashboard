@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Clientes | Prospecte OS{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/clients.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="clients-page">
+    <div class="topbar">
+        <div class="title">
+            <h1>Clientes</h1>
+            <p>Gerencie os clientes que serão acompanhados no Overview.</p>
+        </div>
+        <a href="{{ url_for('novo_cliente') }}" class="client-primary-button">
+            <i class="bi bi-plus-lg"></i>
+            Novo cliente
+        </a>
+    </div>
+
+    {% if message %}
+    <div class="client-notice client-notice-success"><i class="bi bi-check-circle"></i>{{ message }}</div>
+    {% endif %}
+
+    {% if error %}
+    <div class="client-notice client-notice-error"><i class="bi bi-exclamation-circle"></i>{{ error }}</div>
+    {% endif %}
+
+    <section class="panel clients-panel">
+        <div class="panel-header">
+            <div>
+                <div class="panel-title">Base de clientes</div>
+                <div class="panel-subtitle">Apenas clientes ativos aparecerão no Overview após a conexão com a Meta Ads.</div>
+            </div>
+            <span class="client-count">{{ clients|length }} cliente{% if clients|length != 1 %}s{% endif %}</span>
+        </div>
+
+        {% if clients %}
+        <div class="table-wrapper">
+            <table class="clients-table">
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Contato</th>
+                        <th>Status</th>
+                        <th>Meta Ads</th>
+                        <th class="client-actions-heading">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for client in clients %}
+                    <tr>
+                        <td>
+                            <div class="clients-identity">
+                                <span class="clients-avatar">{{ client.name[0]|upper }}</span>
+                                <span>
+                                    <strong>{{ client.name }}</strong>
+                                    {% if client.segment %}<small>{{ client.segment }}</small>{% endif %}
+                                </span>
+                            </div>
+                        </td>
+                        <td>
+                            {% if client.contact_name %}<strong>{{ client.contact_name }}</strong>{% endif %}
+                            {% if client.contact_email %}<small>{{ client.contact_email }}</small>{% endif %}
+                            {% if not client.contact_name and not client.contact_email %}<span class="client-empty">Não informado</span>{% endif %}
+                        </td>
+                        <td><span class="client-status client-status-{{ client.status }}">{{ {'draft': 'Rascunho', 'active': 'Ativo', 'paused': 'Pausado', 'archived': 'Arquivado'}[client.status] }}</span></td>
+                        <td><span class="client-meta client-meta-{{ client.meta_connection_status }}"><i class="bi {% if client.meta_connection_status == 'connected' %}bi-check-circle-fill{% else %}bi-link-45deg{% endif %}"></i>{{ {'connected': 'Conectada', 'pending': 'Pendente', 'error': 'Com erro', 'revoked': 'Revogada', 'not_connected': 'Não conectada'}[client.meta_connection_status] }}</span></td>
+                        <td>
+                            <div class="client-row-actions">
+                                <a href="{{ url_for('editar_cliente', client_id=client.id) }}" class="client-icon-button" title="Editar cliente" aria-label="Editar {{ client.name }}"><i class="bi bi-pencil-square"></i></a>
+                                <form method="POST" action="{{ url_for('excluir_cliente', client_id=client.id) }}" onsubmit="return confirm('Remover o cliente {{ client.name|e }}? Esta ação não pode ser desfeita.');">
+                                    <button type="submit" class="client-icon-button client-delete-button" title="Remover cliente" aria-label="Remover {{ client.name }}"><i class="bi bi-trash3"></i></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="clients-empty">
+            <span class="clients-empty-icon"><i class="bi bi-people"></i></span>
+            <h2>Nenhum cliente cadastrado</h2>
+            <p>Cadastre o primeiro cliente para organizar as futuras conexões com a Meta Ads.</p>
+            <a href="{{ url_for('novo_cliente') }}" class="client-primary-button">Cadastrar cliente</a>
+        </div>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

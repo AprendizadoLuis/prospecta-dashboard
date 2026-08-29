@@ -1,0 +1,7 @@
+﻿/* Folha de compatibilidade: use as folhas específicas nos templates. */
+@import url("base.css");
+@import url("components.css");
+@import url("dashboard.css");
+@import url("perfil.css");
+@import url("auth.css");
+@import url("responsive.css");

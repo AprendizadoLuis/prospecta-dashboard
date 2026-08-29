@@ -1,0 +1,799 @@
+{% extends "base.html" %}
+
+{% block title %}Prospecte ADS | Agenda{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/agenda.css') }}">
+{% endblock %}
+
+{% block content %}
+
+
+        <!-- ==================================================
+             HEADER
+        ================================================== -->
+
+        <div class="topbar">
+
+            <div class="title">
+
+                <h1>
+                    Agenda
+                </h1>
+
+                <p>
+                    Visão geral do tempo utilizado pela operação.
+                </p>
+
+            </div>
+
+
+            <div class="top-actions">
+
+                <div class="updated">
+
+                    <strong>
+                        ↻
+                    </strong>
+
+                    Agenda operacional
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ==================================================
+             FILTRO
+        ================================================== -->
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <div class="panel-title">
+                        Período
+                    </div>
+
+                    <div class="panel-subtitle">
+                        Selecione o período que deseja analisar.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <form
+                method="GET"
+                action="{{ url_for('agenda') }}"
+                class="agenda-filter"
+            >
+
+                <input
+                    type="date"
+                    name="start"
+                    value="{{ start_date }}"
+                    class="search"
+                >
+
+
+                <span>
+                    até
+                </span>
+
+
+                <input
+                    type="date"
+                    name="end"
+                    value="{{ end_date }}"
+                    class="search"
+                >
+
+
+                <button
+                    type="submit"
+                    class="columns-button"
+                >
+                    Aplicar
+                </button>
+
+            </form>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             KPIs
+        ================================================== -->
+
+        <section class="kpis">
+
+
+            <!-- HORAS -->
+
+            <div class="kpi">
+
+                <div class="kpi-top">
+
+                    <div class="kpi-icon">
+                        ◷
+                    </div>
+
+                    <div class="kpi-label">
+                        Horas trabalhadas
+                    </div>
+
+                </div>
+
+
+                <div class="kpi-value">
+
+                    {{ "%.2f"|format(
+                        dashboard.total_hours
+                    )|replace(".", ",")
+                    }} h
+
+                </div>
+
+            </div>
+
+
+
+            <!-- EVENTOS -->
+
+            <div class="kpi">
+
+                <div class="kpi-top">
+
+                    <div class="kpi-icon">
+                        ◉
+                    </div>
+
+                    <div class="kpi-label">
+                        Eventos registrados
+                    </div>
+
+                </div>
+
+
+                <div class="kpi-value">
+
+                    {{ dashboard.total_events }}
+
+                </div>
+
+            </div>
+
+
+
+            <!-- CLIENTES -->
+
+            <div class="kpi">
+
+                <div class="kpi-top">
+
+                    <div class="kpi-icon">
+                        ♙
+                    </div>
+
+                    <div class="kpi-label">
+                        Clientes atendidos
+                    </div>
+
+                </div>
+
+
+                <div class="kpi-value">
+
+                    {{ dashboard.clients_count }}
+
+                </div>
+
+            </div>
+
+
+
+            <!-- MÉDIA -->
+
+            <div class="kpi">
+
+                <div class="kpi-top">
+
+                    <div class="kpi-icon">
+                        Ø
+                    </div>
+
+                    <div class="kpi-label">
+                        Média por evento
+                    </div>
+
+                </div>
+
+
+                <div class="kpi-value">
+
+                    {{ "%.2f"|format(
+                        dashboard.average_per_event
+                    )|replace(".", ",")
+                    }} h
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             HORAS POR CLIENTE
+        ================================================== -->
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <div class="panel-title">
+                        Horas por cliente
+                    </div>
+
+                    <div class="panel-subtitle">
+                        Clientes que mais consomem tempo da operação.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div style="padding:30px;">
+
+                {% for project in dashboard.projects %}
+
+                    <div style="margin-bottom:22px;">
+
+                        <div
+                            style="
+                                display:flex;
+                                justify-content:space-between;
+                                margin-bottom:7px;
+                                gap:15px;
+                            "
+                        >
+
+                            <strong>
+                                {{ project.name }}
+                            </strong>
+
+
+                            <span>
+
+                                {{ "%.2f"|format(
+                                    project.hours
+                                )|replace(".", ",")
+                                }} h
+
+                            </span>
+
+                        </div>
+
+
+                        <div
+                            style="
+                                width:100%;
+                                height:14px;
+                                background:#edf1f7;
+                                border-radius:20px;
+                                overflow:hidden;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    width:{{ project.percentage }}%;
+                                    height:100%;
+                                    background:#146bea;
+                                    border-radius:20px;
+                                "
+                            ></div>
+
+                        </div>
+
+
+                        <div
+                            style="
+                                margin-top:6px;
+                                color:#718096;
+                                font-size:13px;
+                            "
+                        >
+
+                            {{ project.events }}
+                            evento(s)
+
+                            ·
+
+                            {{ "%.2f"|format(
+                                project.percentage
+                            )|replace(".", "")
+                            }}% da operação
+
+                        </div>
+
+                    </div>
+
+
+                {% else %}
+
+                    <div
+                        style="
+                            text-align:center;
+                            padding:50px;
+                            color:#718096;
+                        "
+                    >
+                        Nenhum cliente encontrado no período.
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             HORAS POR CATEGORIA
+        ================================================== -->
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <div class="panel-title">
+                        Horas por categoria
+                    </div>
+
+                    <div class="panel-subtitle">
+                        Como o tempo da equipe está sendo distribuído.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div style="padding:30px;">
+
+                {% for category in dashboard.categories %}
+
+                    <div style="margin-bottom:22px;">
+
+                        <div
+                            style="
+                                display:flex;
+                                justify-content:space-between;
+                                margin-bottom:7px;
+                                gap:15px;
+                            "
+                        >
+
+                            <div>
+
+                                <strong>
+                                    {{ category.name }}
+                                </strong>
+
+                                <span
+                                    style="
+                                        margin-left:8px;
+                                        font-size:12px;
+                                        color:#146bea;
+                                    "
+                                >
+                                    [{{ category.code }}]
+                                </span>
+
+                            </div>
+
+
+                            <span>
+
+                                {{ "%.2f"|format(
+                                    category.hours
+                                )|replace(".", ",")
+                                }} h
+
+                            </span>
+
+                        </div>
+
+
+                        <div
+                            style="
+                                width:100%;
+                                height:14px;
+                                background:#edf1f7;
+                                border-radius:20px;
+                                overflow:hidden;
+                            "
+                        >
+
+                            <div
+                                style="
+                                    width:{{ category.percentage }}%;
+                                    height:100%;
+                                    background:#1c3f7c;
+                                    border-radius:20px;
+                                "
+                            ></div>
+
+                        </div>
+
+
+                        <div
+                            style="
+                                margin-top:6px;
+                                color:#718096;
+                                font-size:13px;
+                            "
+                        >
+
+                            {{ category.events }}
+                            evento(s)
+
+                        </div>
+
+                    </div>
+
+
+                {% else %}
+
+                    <div
+                        style="
+                            text-align:center;
+                            padding:50px;
+                            color:#718096;
+                        "
+                    >
+                        Nenhuma categoria encontrada.
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             RESUMO POR CLIENTE
+        ================================================== -->
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <div class="panel-title">
+                        Resumo por cliente
+                    </div>
+
+                    <div class="panel-subtitle">
+                        Detalhamento do tempo utilizado por cada cliente.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Cliente
+                            </th>
+
+                            <th>
+                                Eventos
+                            </th>
+
+                            <th>
+                                Horas
+                            </th>
+
+                            <th>
+                                % da operação
+                            </th>
+
+                            <th>
+                                Média / evento
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for project in dashboard.projects %}
+
+                        <tr>
+
+                            <td>
+
+                                <strong>
+                                    {{ project.name }}
+                                </strong>
+
+                            </td>
+
+
+                            <td>
+                                {{ project.events }}
+                            </td>
+
+
+                            <td>
+
+                                {{ "%.2f"|format(
+                                    project.hours
+                                )|replace(".", ",")
+                                }} h
+
+                            </td>
+
+
+                            <td>
+
+                                {{ "%.2f"|format(
+                                    project.percentage
+                                )|replace(".", ",")
+                                }}%
+
+                            </td>
+
+
+                            <td>
+
+                                {{ "%.2f"|format(
+                                    project.average
+                                )|replace(".", ",")
+                                }} h
+
+                            </td>
+
+                        </tr>
+
+
+                        {% else %}
+
+                        <tr>
+
+                            <td colspan="5">
+                                Nenhum cliente encontrado.
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- ==================================================
+             EVENTOS
+        ================================================== -->
+
+        <section class="panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <div class="panel-title">
+                        Eventos analisados
+                    </div>
+
+                    <div class="panel-subtitle">
+                        Eventos utilizados nos cálculos do período.
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Data
+                            </th>
+
+                            <th>
+                                Evento
+                            </th>
+
+                            <th>
+                                Projeto
+                            </th>
+
+                            <th>
+                                Categoria
+                            </th>
+
+                            <th>
+                                Início
+                            </th>
+
+                            <th>
+                                Fim
+                            </th>
+
+                            <th>
+                                Horas
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for event in dashboard.events %}
+
+                        <tr>
+
+
+                            <td>
+
+                                {{ event.start_datetime.strftime(
+                                    "%d/%m/%Y"
+                                ) }}
+
+                            </td>
+
+
+                            <td>
+
+                                {{ event.title }}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if event.project %}
+
+                                    {{ event.project.name }}
+
+                                {% else %}
+
+                                    <span
+                                        style="
+                                            color:#718096;
+                                        "
+                                    >
+                                        Sem projeto
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {% if event.category %}
+
+                                    [{{ event.category.code }}]
+                                    {{ event.category.name }}
+
+                                {% else %}
+
+                                    <span
+                                        style="
+                                            color:#718096;
+                                        "
+                                    >
+                                        Sem categoria
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+
+                            <td>
+
+                                {{ event.start_datetime.strftime(
+                                    "%H:%M"
+                                ) }}
+
+                            </td>
+
+
+                            <td>
+
+                                {{ event.end_datetime.strftime(
+                                    "%H:%M"
+                                ) }}
+
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+
+                                    {{ "%.2f"|format(
+                                        event.duration_hours
+                                    )|replace(".", ",")
+                                    }} h
+
+                                </strong>
+
+                            </td>
+
+
+                        </tr>
+
+
+                        {% else %}
+
+                        <tr>
+
+                            <td colspan="7">
+                                Nenhum evento encontrado.
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+{% endblock %}

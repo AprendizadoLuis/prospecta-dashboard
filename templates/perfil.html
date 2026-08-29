@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}Meu Perfil | Prospecte OS{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/perfil.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="perfil-page">
+
+    <div class="topbar">
+        <div class="title">
+            <h1>Meu Perfil</h1>
+            <p>Gerencie suas informações pessoais, segurança e preferências.</p>
+        </div>
+    </div>
+
+
+    <div class="perfil-grid">
+
+        <!-- PERFIL -->
+        <section class="perfil-card perfil-user-card">
+
+            <div class="perfil-user-top">
+
+                <div class="perfil-avatar">
+                    {{ session.get("user_name", "U")[0]|upper }}
+                </div>
+
+                <div class="perfil-user-data">
+
+                    <h2>
+                        {{ session.get("user_name", "Usuário") }}
+                    </h2>
+
+                    <p>
+                        {{ session.get("user_email", "") }}
+                    </p>
+
+                    <span class="perfil-role">
+                        {% if session.get("user_role") == "admin" %}
+                            Administrador
+                        {% else %}
+                            {{ session.get("user_role", "Usuário")|capitalize }}
+                        {% endif %}
+                    </span>
+
+                </div>
+
+            </div>
+
+            <div class="perfil-photo-actions">
+                <button type="button">
+                    Alterar foto
+                </button>
+
+                <span>
+                    JPG ou PNG · até 2 MB
+                </span>
+            </div>
+
+        </section>
+
+
+        <!-- DADOS PESSOAIS -->
+        <section class="perfil-card">
+
+            <div class="perfil-card-header">
+                <h2>Dados pessoais</h2>
+                <p>Atualize as informações da sua conta.</p>
+            </div>
+
+            <div class="perfil-card-body">
+
+                <form method="POST">
+
+                    <div class="perfil-form-grid">
+
+                        <div class="perfil-field">
+                            <label for="name">Nome</label>
+
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                value="{{ session.get('user_name', '') }}"
+                            >
+                        </div>
+
+
+                        <div class="perfil-field">
+                            <label for="email">E-mail</label>
+
+                            <input
+                                type="email"
+                                id="email"
+                                value="{{ session.get('user_email', '') }}"
+                                disabled
+                            >
+
+                            <small>
+                                O e-mail é utilizado para acessar sua conta.
+                            </small>
+                        </div>
+
+                    </div>
+
+                    <div class="perfil-form-actions">
+
+                        <button
+                            type="submit"
+                            class="perfil-btn-primary"
+                        >
+                            Salvar alterações
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </section>
+
+
+        <!-- SEGURANÇA -->
+        <section class="perfil-card">
+
+            <div class="perfil-card-header">
+                <h2>Segurança</h2>
+                <p>Gerencie o acesso e a segurança da sua conta.</p>
+            </div>
+
+            <div class="perfil-list">
+
+                <div class="perfil-list-item">
+
+                    <div class="perfil-list-icon">
+                        🔒
+                    </div>
+
+                    <div class="perfil-list-content">
+
+                        <strong>Senha</strong>
+
+                        <span>
+                            Altere sua senha de acesso ao Prospecte OS.
+                        </span>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="perfil-btn-secondary"
+                    >
+                        Alterar senha
+                    </button>
+
+                </div>
+
+
+                <div class="perfil-list-item">
+
+                    <div class="perfil-list-icon">
+                        ✓
+                    </div>
+
+                    <div class="perfil-list-content">
+
+                        <strong>Status da conta</strong>
+
+                        <span>
+                            Sua conta está ativa e funcionando normalmente.
+                        </span>
+
+                    </div>
+
+                    <span class="perfil-status">
+                        Ativa
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- INTEGRAÇÕES -->
+        <section class="perfil-card">
+
+            <div class="perfil-card-header">
+                <h2>Integrações</h2>
+                <p>Conecte suas ferramentas ao Prospecte OS.</p>
+            </div>
+
+            <div class="perfil-list">
+
+                <div class="perfil-list-item">
+
+                    <div class="google-icon">
+                        G
+                    </div>
+
+                    <div class="perfil-list-content">
+
+                        <strong>Google Agenda</strong>
+
+                        <span>
+                            Sincronize sua agenda pessoal com o Prospecte OS.
+                        </span>
+
+                    </div>
+
+                    <button
+                        type="button"
+                        class="perfil-btn-secondary"
+                    >
+                        Conectar
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- PREFERÊNCIAS -->
+        <section class="perfil-card">
+
+            <div class="perfil-card-header">
+                <h2>Preferências</h2>
+                <p>Personalize sua experiência no sistema.</p>
+            </div>
+
+            <div class="perfil-preferences">
+
+                <div class="perfil-preference">
+
+                    <div>
+                        <strong>Notificações</strong>
+
+                        <span>
+                            Receber alertas e atualizações importantes.
+                        </span>
+                    </div>
+
+                    <label class="perfil-switch">
+                        <input type="checkbox" checked>
+                        <span></span>
+                    </label>
+
+                </div>
+
+
+                <div class="perfil-preference">
+
+                    <div>
+                        <strong>Alertas da agenda</strong>
+
+                        <span>
+                            Receber notificações sobre compromissos.
+                        </span>
+                    </div>
+
+                    <label class="perfil-switch">
+                        <input type="checkbox" checked>
+                        <span></span>
+                    </label>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- SAIR -->
+        <section class="perfil-card perfil-logout-card">
+
+            <div>
+                <h2>Sair da conta</h2>
+
+                <p>
+                    Encerre sua sessão atual neste dispositivo.
+                </p>
+            </div>
+
+            <a
+                href="{{ url_for('logout') }}"
+                class="perfil-btn-danger"
+            >
+                Sair
+            </a>
+
+        </section>
+
+    </div>
+
+</div>
+
+{% endblock %}

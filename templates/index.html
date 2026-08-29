@@ -1,0 +1,1284 @@
+{% extends "base.html" %}
+
+{% block title %}Prospecta ADS | Overview{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="page-container overview-page">
+    <header class="overview-topbar">
+        <div class="overview-heading">
+            <div class="overview-eyebrow"><span></span> Meta Ads · Gestão de performance</div>
+            <h1><strong>Overview</strong> de Clientes</h1>
+            <p>Acompanhe, compare e identifique rapidamente o que está melhorando nas contas conectadas.</p>
+        </div>
+
+        <div class="overview-period-area">
+            <form class="overview-date-form" method="GET" action="/" id="dateForm">
+                <div class="overview-period-label">Período</div>
+                <div class="overview-presets" aria-label="Períodos rápidos">
+                    <button type="button" class="overview-preset" data-days="3">3 dias</button>
+                    <button type="button" class="overview-preset" data-days="7">7 dias</button>
+                    <button type="button" class="overview-preset" data-days="15">15 dias</button>
+                    <button type="button" class="overview-preset" data-days="30">30 dias</button>
+                </div>
+                <div class="overview-date-box">
+                    <input type="date" name="since" id="since" value="{{ since }}" aria-label="Data inicial">
+                    <span>até</span>
+                    <input type="date" name="until" id="until" value="{{ until }}" aria-label="Data final">
+                    <button type="submit">Aplicar</button>
+                </div>
+            </form>
+            <div class="overview-period-context">
+                <span class="overview-live-dot"></span>
+                <div><small>Período analisado</small><strong>{{ period_label }}</strong></div>
+            </div>
+        </div>
+    </header>
+
+    {% if error %}
+    <div class="overview-error"><strong>Não foi possível consultar as contas da Meta.</strong><span>{{ error }}</span></div>
+    {% endif %}
+
+    <section class="kpis overview-kpis">
+
+        <article class="kpi-card kpi-card-spend">
+            <div class="kpi-card-head">
+                <div class="kpi-icon">$</div>
+                <div>
+                    <div class="kpi-label">Valor gasto</div>
+                    <div class="kpi-period">Período atual</div>
+                </div>
+            </div>
+            <div class="kpi-value" id="kpiSpend">R$ {{ "%.2f"|format(total_spend) }}</div>
+            <div class="kpi-compare-row">
+                {% if spend_change is not none %}
+                    <span id="kpiSpendChange" class="compare-pill { 'positive' if spend_change >= 0 else 'negative' }}">{{ '↑' if spend_change >= 0 else '↓' }} {{ "%.1f"|format(spend_change|abs) }}%</span>
+                    <span id="kpiSpendChangeText" class="compare-text">vs. período anterior</span>
+                {% else %}
+                    <span class="compare-muted">Sem comparativo</span>
+                {% endif %}
+            </div>
+            <div class="kpi-previous">Anterior: <strong id="kpiSpendPrevious">R$ {{ "%.2f"|format(previous_total_spend) }}</strong></div>
+        </article>
+
+        <article class="kpi-card kpi-card-conversations">
+            <div class="kpi-card-head">
+                <div class="kpi-icon">◉</div>
+                <div>
+                    <div class="kpi-label">Conversas iniciadas</div>
+                    <div class="kpi-period">Período atual</div>
+                </div>
+            </div>
+            <div class="kpi-value" id="kpiConversations">{{ "{:,.0f}".format(total_conversations).replace(",", ".") }}</div>
+            <div class="kpi-compare-row">
+                {% if conversations_change is not none %}
+                    <span id="kpiConversationsChange" class="compare-pill { 'positive' if conversations_change >= 0 else 'negative' }}">{{ '↑' if conversations_change >= 0 else '↓' }} {{ "%.1f"|format(conversations_change|abs) }}%</span>
+                    <span id="kpiConversationsChangeText" class="compare-text">vs. período anterior</span>
+                {% else %}
+                    <span class="compare-muted">Sem comparativo</span>
+                {% endif %}
+            </div>
+            <div class="kpi-previous">Anterior: <strong id="kpiConversationsPrevious">{{ "{:,.0f}".format(previous_total_conversations).replace(",", ".") }}</strong></div>
+        </article>
+
+        <article class="kpi-card kpi-card-cost">
+            <div class="kpi-card-head">
+                <div class="kpi-icon">$</div>
+                <div>
+                    <div class="kpi-label">Custo por conversa</div>
+                    <div class="kpi-period">Período atual</div>
+                </div>
+            </div>
+            <div class="kpi-value" id="kpiCost">R$ {{ "%.2f"|format(average_cost_per_conversation) }}</div>
+            <div class="kpi-compare-row">
+                {% if cost_change is not none %}
+                    <span id="kpiCostChange" class="compare-pill { 'positive' if cost_change <= 0 else 'negative' }}">{{ '↓' if cost_change <= 0 else '↑' }} {{ "%.1f"|format(cost_change|abs) }}%</span>
+                    <span id="kpiCostChangeText" class="compare-text">{{ 'melhor que antes' if cost_change <= 0 else 'pior que antes' }}</span>
+                {% else %}
+                    <span class="compare-muted">Sem comparativo</span>
+                {% endif %}
+            </div>
+            <div class="kpi-previous">Anterior: <strong id="kpiCostPrevious">R$ {{ "%.2f"|format(previous_average_cost_per_conversation) }}</strong></div>
+        </article>
+
+        <article class="kpi-card kpi-card-ctr">
+            <div class="kpi-card-head">
+                <div class="kpi-icon">%</div>
+                <div>
+                    <div class="kpi-label">CTR médio</div>
+                    <div class="kpi-period">Período atual</div>
+                </div>
+            </div>
+            <div class="kpi-value" id="kpiCtr">{{ "%.2f"|format(average_ctr) }}%</div>
+            <div class="kpi-compare-row">
+                {% if ctr_change is not none %}
+                    <span id="kpiCtrChange" class="compare-pill { 'positive' if ctr_change >= 0 else 'negative' }}">{{ '↑' if ctr_change >= 0 else '↓' }} {{ "%.1f"|format(ctr_change|abs) }}%</span>
+                    <span id="kpiCtrChangeText" class="compare-text">vs. período anterior</span>
+                {% else %}
+                    <span class="compare-muted">Sem comparativo</span>
+                {% endif %}
+            </div>
+            <div class="kpi-previous">Anterior: <strong id="kpiCtrPrevious">{{ "%.2f"|format(previous_average_ctr) }}%</strong></div>
+        </article>
+
+        <article class="kpi-card kpi-card-cpm">
+            <div class="kpi-card-head">
+                <div class="kpi-icon">◉</div>
+                <div>
+                    <div class="kpi-label">CPM médio</div>
+                    <div class="kpi-period">Período atual</div>
+                </div>
+            </div>
+            <div class="kpi-value" id="kpiCpm">R$ {{ "%.2f"|format(average_cpm) }}</div>
+            <div class="kpi-compare-row">
+                {% if cpm_change is not none %}
+                    <span id="kpiCpmChange" class="compare-pill { 'positive' if cpm_change <= 0 else 'negative' }}">{{ '↓' if cpm_change <= 0 else '↑' }} {{ "%.1f"|format(cpm_change|abs) }}%</span>
+                    <span id="kpiCpmChangeText" class="compare-text">vs. período anterior</span>
+                {% else %}
+                    <span class="compare-muted">Sem comparativo</span>
+                {% endif %}
+            </div>
+            <div class="kpi-previous">Anterior: <strong id="kpiCpmPrevious">R$ {{ "%.2f"|format(previous_average_cpm) }}</strong></div>
+        </article>
+
+    </section>
+
+    <div class="comparison-legend overview-legend">
+        <span class="legend-title">Leitura rápida</span>
+        <span class="legend-item"><i class="legend-dot positive"></i> Melhor desempenho</span>
+        <span class="legend-item"><i class="legend-dot negative"></i> Pior desempenho</span>
+        <span class="legend-item"><i class="legend-dot neutral"></i> Comparado ao período anterior</span>
+    </div>
+
+    <section class="panel">
+
+
+        <!-- CABEÇALHO -->
+
+        <div class="panel-header">
+
+
+            <div>
+
+                <div class="panel-title">
+                    Performance por Cliente
+                </div>
+
+                <div class="panel-subtitle">
+                    Selecione uma ou mais contas para recalcular os indicadores acima.
+                </div>
+
+            </div>
+
+
+
+            <div class="panel-controls">
+
+                <div class="overview-selection-summary" id="selectionSummary">
+                    <span class="selection-count" id="selectionCount">Todas as contas</span>
+                    <button type="button" class="selection-clear" id="selectionClear">Limpar</button>
+                </div>
+
+                <!-- BUSCA -->
+
+                <input
+                    class="search"
+                    id="search"
+                    type="text"
+                    placeholder="Buscar cliente..."
+                >
+
+
+
+                <!-- MENU DE COLUNAS -->
+
+                <div class="columns-wrapper">
+
+                    <button
+                        type="button"
+                        class="columns-button"
+                        id="columnsButton"
+                    >
+
+                        ⚙
+
+                        Colunas
+
+                        <span>
+                            ▾
+                        </span>
+
+                    </button>
+
+
+
+                    <div
+                        class="columns-menu"
+                        id="columnsMenu"
+                    >
+
+                        <div class="columns-menu-title">
+                            Escolha as métricas
+                        </div>
+
+
+
+                        <!-- VALOR GASTO -->
+
+                        <label class="column-option">
+
+                            <input
+                                type="checkbox"
+                                data-column="spend"
+                                checked
+                            >
+
+                            Valor gasto
+
+                        </label>
+
+
+
+                        <!-- CONVERSAS -->
+
+                        <label class="column-option">
+
+                            <input
+                                type="checkbox"
+                                data-column="conversations"
+                                checked
+                            >
+
+                            Conversas iniciadas
+
+                        </label>
+
+
+
+                        <!-- CUSTO -->
+
+                        <label class="column-option">
+
+                            <input
+                                type="checkbox"
+                                data-column="cost_per_conversation"
+                                checked
+                            >
+
+                            Custo por conversa
+
+                        </label>
+
+
+
+                        <!-- IMPRESSÕES -->
+
+                        <label class="column-option">
+
+                            <input
+                                type="checkbox"
+                                data-column="impressions"
+                            >
+
+                            Impressões
+
+                        </label>
+
+
+
+                        <!-- ALCANCE -->
+
+                        <label class="column-option">
+
+                            <input
+                                type="checkbox"
+                                data-column="reach"
+                            >
+
+                            Alcance
+
+                        </label>
+
+
+
+                        <!-- CLIQUES -->
+
+                        <label class="column-option">
+
+                            <input
+                                type="checkbox"
+                                data-column="link_clicks"
+                            >
+
+                            Cliques no link
+
+                        </label>
+
+
+
+                        <!-- CTR -->
+
+                        <label class="column-option">
+
+                            <input
+                                type="checkbox"
+                                data-column="ctr"
+                                checked
+                            >
+
+                            CTR
+
+                        </label>
+
+
+
+                        <!-- CPM -->
+
+                        <label class="column-option">
+
+                            <input
+                                type="checkbox"
+                                data-column="cpm"
+                                checked
+                            >
+
+                            CPM
+
+                        </label>
+
+
+
+                        <!-- RESET -->
+
+                        <button
+                            type="button"
+                            class="columns-reset"
+                            id="columnsReset"
+                        >
+
+                            Restaurar padrão
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- ==================================================
+             TABELA
+        ================================================== -->
+
+        <div class="table-wrapper">
+
+            <table id="clientTable">
+
+
+                <thead>
+
+                    <tr>
+
+
+                        <!-- SELEÇÃO -->
+
+                        <th class="selection-column">
+                            <label class="select-all-wrap" title="Selecionar todas as contas">
+                                <input type="checkbox" id="selectAllClients" checked aria-label="Selecionar todas as contas">
+                                <span></span>
+                            </label>
+                        </th>
+
+                        <!-- CLIENTE -->
+
+                        <th
+                            class="sortable"
+                            data-sort="name"
+                        >
+
+                            Cliente
+
+                            <span
+                                class="sort-icon"
+                            ></span>
+
+                        </th>
+
+
+
+                        <!-- STATUS -->
+
+                        <th>
+                            Status
+                        </th>
+
+
+
+                        <!-- VALOR GASTO -->
+
+                        <th
+                            class="sortable"
+                            data-sort="spend"
+                        >
+
+                            Valor gasto
+
+                            <span
+                                class="sort-icon"
+                            ></span>
+
+                        </th>
+
+
+
+                        <!-- CONVERSAS -->
+
+                        <th
+                            class="sortable"
+                            data-sort="conversations"
+                            data-column="conversations"
+                        >
+
+                            Conversas iniciadas
+
+                            <span
+                                class="sort-icon"
+                            ></span>
+
+                        </th>
+
+
+
+                        <!-- CUSTO -->
+
+                        <th
+                            class="sortable"
+                            data-sort="cost_per_conversation"
+                            data-column="cost_per_conversation"
+                        >
+
+                            Custo por conversa
+
+                            <span
+                                class="sort-icon"
+                            ></span>
+
+                        </th>
+
+
+
+                        <!-- IMPRESSÕES -->
+
+                        <th
+                            class="sortable"
+                            data-sort="impressions"
+                            data-column="impressions"
+                        >
+
+                            Impressões
+
+                            <span
+                                class="sort-icon"
+                            ></span>
+
+                        </th>
+
+
+
+                        <!-- ALCANCE -->
+
+                        <th
+                            class="sortable"
+                            data-sort="reach"
+                            data-column="reach"
+                        >
+
+                            Alcance
+
+                            <span
+                                class="sort-icon"
+                            ></span>
+
+                        </th>
+
+
+
+                        <!-- CLIQUES -->
+
+                        <th
+                            class="sortable"
+                            data-sort="link_clicks"
+                            data-column="link_clicks"
+                        >
+
+                            Cliques no link
+
+                            <span
+                                class="sort-icon"
+                            ></span>
+
+                        </th>
+
+
+
+                        <!-- CTR -->
+
+                        <th
+                            class="sortable"
+                            data-sort="ctr"
+                            data-column="ctr"
+                        >
+
+                            CTR
+
+                            <span
+                                class="sort-icon"
+                            ></span>
+
+                        </th>
+
+
+
+                        <!-- CPM -->
+
+                        <th
+                            class="sortable"
+                            data-sort="cpm"
+                            data-column="cpm"
+                        >
+
+                            CPM
+
+                            <span
+                                class="sort-icon"
+                            ></span>
+
+                        </th>
+
+
+
+                        <!-- ALERTA -->
+
+                        <th>
+                            Alerta
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+
+                <tbody>
+
+
+                    {% for account in accounts %}
+
+                    <tr class="client-row" data-client-id="{{ account.client_id|default(account.id) }}">
+
+                        <td class="selection-column">
+                            <label class="select-client-wrap" title="Selecionar {{ account.name }}">
+                                <input
+                                    type="checkbox"
+                                    class="client-selector"
+                                    checked
+                                    aria-label="Selecionar {{ account.name }}"
+                                    data-client-id="{{ account.client_id|default(account.id) }}"
+                                >
+                                <span></span>
+                            </label>
+                        </td>
+
+                        <!-- CLIENTE -->
+
+                        <td
+                            data-sort-field="name"
+                            data-sort-value="{{ account.name }}"
+                            data-current-spend="{{ account.spend }}"
+                            data-current-conversations="{{ account.conversations }}"
+                            data-current-impressions="{{ account.impressions }}"
+                            data-current-link-clicks="{{ account.link_clicks }}"
+                            data-previous-spend="{{ account.previous_spend|default(0) }}"
+                            data-previous-conversations="{{ account.previous_conversations|default(0) }}"
+                            data-previous-impressions="{{ account.previous_impressions|default(0) }}"
+                            data-previous-link-clicks="{{ account.previous_link_clicks|default(0) }}"
+                        >
+
+                            <div class="client">
+
+
+                                <div class="avatar">
+
+                                    {{ account.name[:2].upper() }}
+
+                                </div>
+
+
+                                <div>
+
+                                    <div class="client-name">
+
+                                        {{ account.name }}
+
+                                    </div>
+
+
+                                    <div class="account-id">
+
+                                        {{ account.account_id }}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </td>
+
+
+
+                        <!-- STATUS -->
+
+                        <td>
+
+                            <span
+                                class="
+                                    status
+                                    {{ account.status.class }}
+                                "
+                            >
+
+                                {% if account.status.class == "healthy" %}
+
+                                    ●
+
+                                {% elif account.status.class == "warning" %}
+
+                                    !
+
+                                {% else %}
+
+                                    !
+
+                                {% endif %}
+
+                                {{ account.status.label }}
+
+                            </span>
+
+                        </td>
+
+
+
+                        <!-- VALOR GASTO -->
+
+                        <td
+                            data-sort-field="spend"
+                            data-sort-value="{{ account.spend }}"
+                        >
+
+                            <div class="metric-main">
+                                R$ {{ "%.2f"|format(account.spend) }}
+                            </div>
+
+                        </td>
+
+
+
+                        <!-- CONVERSAS -->
+
+                        <td
+                            data-column="conversations"
+                            data-sort-field="conversations"
+                            data-sort-value="{{ account.conversations }}"
+                        >
+
+                            <div class="metric-main">
+                                {{ "{:,.0f}".format(account.conversations).replace(",", ".") }}
+                            </div>
+
+                        </td>
+
+
+
+                        <!-- CUSTO -->
+
+                        <td
+                            data-column="cost_per_conversation"
+                            data-sort-field="cost_per_conversation"
+                            data-sort-value="{{ account.cost_per_conversation }}"
+                            class="
+                                {% if account.status.class == 'critical' %}
+                                    metric-danger
+                                {% elif account.status.class == 'healthy' %}
+                                    metric-good
+                                {% endif %}
+                            "
+                        >
+
+                            <div class="metric-main">
+                                R$ {{ "%.2f"|format(account.cost_per_conversation) }}
+                            </div>
+
+                        </td>
+
+
+
+                        <!-- IMPRESSÕES -->
+
+                        <td
+                            data-column="impressions"
+                            data-sort-field="impressions"
+                            data-sort-value="{{ account.impressions }}"
+                        >
+
+                            {{
+                                "{:,.0f}".format(
+                                    account.impressions
+                                ).replace(",", ".")
+                            }}
+
+                        </td>
+
+
+
+                        <!-- ALCANCE -->
+
+                        <td
+                            data-column="reach"
+                            data-sort-field="reach"
+                            data-sort-value="{{ account.reach }}"
+                        >
+
+                            {{
+                                "{:,.0f}".format(
+                                    account.reach
+                                ).replace(",", ".")
+                            }}
+
+                        </td>
+
+
+
+                        <!-- CLIQUES -->
+
+                        <td
+                            data-column="link_clicks"
+                            data-sort-field="link_clicks"
+                            data-sort-value="{{ account.link_clicks }}"
+                        >
+
+                            {{
+                                "{:,.0f}".format(
+                                    account.link_clicks
+                                ).replace(",", ".")
+                            }}
+
+                        </td>
+
+
+
+                        <!-- CTR -->
+
+                        <td
+                            data-column="ctr"
+                            data-sort-field="ctr"
+                            data-sort-value="{{ account.ctr }}"
+                            class="
+                                {% if account.ctr < average_ctr * 0.75 %}
+                                    metric-danger
+                                {% elif account.ctr >= average_ctr %}
+                                    metric-good
+                                {% endif %}
+                            "
+                        >
+
+                            {{ "%.2f"|format(
+                                account.ctr
+                            ) }}%
+
+                        </td>
+
+
+
+                        <!-- CPM -->
+
+                        <td
+                            data-column="cpm"
+                            data-sort-field="cpm"
+                            data-sort-value="{{ account.cpm }}"
+                            class="
+                                {% if account.cpm > average_cpm * 1.30 %}
+                                    metric-danger
+                                {% elif account.cpm <= average_cpm %}
+                                    metric-good
+                                {% endif %}
+                            "
+                        >
+
+                            R$
+
+                            {{ "%.2f"|format(
+                                account.cpm
+                            ) }}
+
+                        </td>
+
+
+
+                        <!-- ALERTA -->
+
+                        <td>
+
+                            <span class="alert">
+
+                                {% if account.status.class == "critical" %}
+
+                                    ⚠
+
+                                {% elif account.status.class == "warning" %}
+
+                                    !
+
+                                {% else %}
+
+                                    ✓
+
+                                {% endif %}
+
+                            </span>
+
+                        </td>
+
+
+                    </tr>
+
+                    {% endfor %}
+
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- ==================================================
+         LEGENDA DO COMPARATIVO
+    ================================================== -->
+
+    
+
+    <section class="bottom overview-bottom">
+        <div class="summary">
+            <div class="summary-title">Resumo das contas</div>
+            <div class="summary-items">
+                <div class="summary-item"><strong>{{ accounts|length }}</strong><span>Contas ativas</span></div>
+                <div class="summary-item"><strong>{{ critical_count }}</strong><span>Em alerta crítico</span></div>
+                <div class="summary-item"><strong>{{ warning_count }}</strong><span>Em atenção</span></div>
+            </div>
+        </div>
+        <div class="summary">
+            <div class="summary-title">Dica Prospecta</div>
+            <p class="summary-tip">{{ critical_count }} conta(s) estão em situação crítica. Revise campanhas, criativos e orçamento dessas contas.</p>
+        </div>
+    </section>
+</div>
+{% endblock %}
+
+{% block page_scripts %}
+<script>
+(function () {
+    const sinceInput = document.getElementById('since');
+    const untilInput = document.getElementById('until');
+    const dateForm = document.getElementById('dateForm');
+    const presets = document.querySelectorAll('.overview-preset');
+
+    function formatDate(date) {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+
+    function setPreset(days) {
+        const end = new Date();
+        const start = new Date(end);
+        start.setDate(end.getDate() - (days - 1));
+        sinceInput.value = formatDate(start);
+        untilInput.value = formatDate(end);
+        dateForm.submit();
+    }
+
+    presets.forEach(btn => btn.addEventListener('click', () => setPreset(Number(btn.dataset.days))));
+
+    function syncPreset() {
+        if (!sinceInput.value || !untilInput.value) return;
+        const start = new Date(`${sinceInput.value}T00:00:00`);
+        const end = new Date(`${untilInput.value}T00:00:00`);
+        const days = Math.round((end - start) / 86400000) + 1;
+        presets.forEach(btn => btn.classList.toggle('active', Number(btn.dataset.days) === days));
+    }
+    syncPreset();
+
+    const table = document.getElementById('clientTable');
+    if (!table) return;
+
+    const tbody = table.querySelector('tbody');
+    const search = document.getElementById('search');
+    const originalRows = Array.from(tbody.querySelectorAll('tr'));
+    let currentSort = null;
+    let currentDirection = null;
+
+    function rowValue(row, column) {
+        const cell = row.querySelector(`[data-sort-field="${column}"]`);
+        if (!cell) return '';
+        const value = cell.dataset.sortValue || '';
+        if (column === 'name') return value.toLowerCase().trim();
+        const number = parseFloat(value);
+        return Number.isNaN(number) ? 0 : number;
+    }
+
+    function updateSortIcons() {
+        document.querySelectorAll('.overview-page th.sortable').forEach(th => th.classList.remove('sort-active', 'sort-asc', 'sort-desc'));
+        if (!currentSort) return;
+        const active = document.querySelector(`.overview-page th[data-sort="${currentSort}"]`);
+        if (active) active.classList.add('sort-active', currentDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+    }
+
+    function sortTable(column) {
+        if (currentSort === column) {
+            if (currentDirection === 'desc') currentDirection = 'asc';
+            else {
+                currentSort = null;
+                currentDirection = null;
+                originalRows.forEach(row => tbody.appendChild(row));
+                updateSortIcons();
+                return;
+            }
+        } else {
+            currentSort = column;
+            currentDirection = 'desc';
+        }
+
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        rows.sort((a, b) => {
+            const va = rowValue(a, column), vb = rowValue(b, column);
+            if (typeof va === 'string' && typeof vb === 'string') {
+                return currentDirection === 'asc'
+                    ? va.localeCompare(vb, 'pt-BR')
+                    : vb.localeCompare(va, 'pt-BR');
+            }
+            return currentDirection === 'asc' ? va - vb : vb - va;
+        });
+        rows.forEach(row => tbody.appendChild(row));
+        updateSortIcons();
+    }
+
+    document.querySelectorAll('.overview-page th.sortable').forEach(
+        th => th.addEventListener('click', () => sortTable(th.dataset.sort))
+    );
+
+    if (search) {
+        search.addEventListener('input', function () {
+            const filter = this.value.toLowerCase().trim();
+            tbody.querySelectorAll('tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+            });
+        });
+    }
+
+    /* ============================================================
+       SELEÇÃO DE CLIENTES — ESTILO META ADS
+       ============================================================ */
+
+    const clientSelectors = Array.from(document.querySelectorAll('.client-selector'));
+    const selectAll = document.getElementById('selectAllClients');
+    const selectionCount = document.getElementById('selectionCount');
+    const selectionClear = document.getElementById('selectionClear');
+
+    function number(value) {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    function money(value) {
+        return new Intl.NumberFormat('pt-BR', {
+            style: 'currency',
+            currency: 'BRL'
+        }).format(value);
+    }
+
+    function integer(value) {
+        return new Intl.NumberFormat('pt-BR', {
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+
+    function decimal(value, digits = 2) {
+        return new Intl.NumberFormat('pt-BR', {
+            minimumFractionDigits: digits,
+            maximumFractionDigits: digits
+        }).format(value);
+    }
+
+    function percentChange(current, previous) {
+        if (previous === 0) return null;
+        return ((current - previous) / previous) * 100;
+    }
+
+    function updateCompare(pill, text, change, type) {
+        if (!pill || !text) return;
+
+        pill.classList.remove('positive', 'negative', 'neutral');
+
+        if (change === null || !Number.isFinite(change)) {
+            pill.textContent = 'Sem comparativo';
+            pill.classList.add('neutral');
+            text.textContent = '';
+            return;
+        }
+
+        const isLowerBetter = type === 'cost' || type === 'cpm';
+        const good = isLowerBetter ? change <= 0 : change >= 0;
+        const arrow = change >= 0 ? '↑' : '↓';
+
+        pill.textContent = `${arrow} ${decimal(Math.abs(change), 1)}%`;
+        pill.classList.add(good ? 'positive' : 'negative');
+
+        if (type === 'cost') {
+            text.textContent = good ? 'melhor que antes' : 'pior que antes';
+        } else {
+            text.textContent = 'vs. período anterior';
+        }
+    }
+
+    function calculateSelection() {
+        const selectedRows = clientSelectors
+            .filter(check => check.checked)
+            .map(check => check.closest('tr'))
+            .filter(Boolean);
+
+        let currentSpend = 0;
+        let currentConversations = 0;
+        let currentImpressions = 0;
+        let currentLinkClicks = 0;
+
+        let previousSpend = 0;
+        let previousConversations = 0;
+        let previousImpressions = 0;
+        let previousLinkClicks = 0;
+
+        selectedRows.forEach(row => {
+            const dataCell = row.querySelector('[data-current-spend]');
+            if (!dataCell) return;
+
+            currentSpend += number(dataCell.dataset.currentSpend);
+            currentConversations += number(dataCell.dataset.currentConversations);
+            currentImpressions += number(dataCell.dataset.currentImpressions);
+            currentLinkClicks += number(dataCell.dataset.currentLinkClicks);
+
+            previousSpend += number(dataCell.dataset.previousSpend);
+            previousConversations += number(dataCell.dataset.previousConversations);
+            previousImpressions += number(dataCell.dataset.previousImpressions);
+            previousLinkClicks += number(dataCell.dataset.previousLinkClicks);
+        });
+
+        const currentCost = currentConversations > 0
+            ? currentSpend / currentConversations
+            : 0;
+        const currentCtr = currentImpressions > 0
+            ? (currentLinkClicks / currentImpressions) * 100
+            : 0;
+        const currentCpm = currentImpressions > 0
+            ? (currentSpend / currentImpressions) * 1000
+            : 0;
+
+        const previousCost = previousConversations > 0
+            ? previousSpend / previousConversations
+            : 0;
+        const previousCtr = previousImpressions > 0
+            ? (previousLinkClicks / previousImpressions) * 100
+            : 0;
+        const previousCpm = previousImpressions > 0
+            ? (previousSpend / previousImpressions) * 1000
+            : 0;
+
+        document.getElementById('kpiSpend').textContent = money(currentSpend);
+        document.getElementById('kpiConversations').textContent = integer(currentConversations);
+        document.getElementById('kpiCost').textContent = money(currentCost);
+        document.getElementById('kpiCtr').textContent = `${decimal(currentCtr)}%`;
+        document.getElementById('kpiCpm').textContent = money(currentCpm);
+
+        document.getElementById('kpiSpendPrevious').textContent = money(previousSpend);
+        document.getElementById('kpiConversationsPrevious').textContent = integer(previousConversations);
+        document.getElementById('kpiCostPrevious').textContent = money(previousCost);
+        document.getElementById('kpiCtrPrevious').textContent = `${decimal(previousCtr)}%`;
+        document.getElementById('kpiCpmPrevious').textContent = money(previousCpm);
+
+        updateCompare(
+            document.getElementById('kpiSpendChange'),
+            document.getElementById('kpiSpendChangeText'),
+            percentChange(currentSpend, previousSpend),
+            'spend'
+        );
+
+        updateCompare(
+            document.getElementById('kpiConversationsChange'),
+            document.getElementById('kpiConversationsChangeText'),
+            percentChange(currentConversations, previousConversations),
+            'conversations'
+        );
+
+        updateCompare(
+            document.getElementById('kpiCostChange'),
+            document.getElementById('kpiCostChangeText'),
+            percentChange(currentCost, previousCost),
+            'cost'
+        );
+
+        updateCompare(
+            document.getElementById('kpiCtrChange'),
+            document.getElementById('kpiCtrChangeText'),
+            percentChange(currentCtr, previousCtr),
+            'ctr'
+        );
+
+        updateCompare(
+            document.getElementById('kpiCpmChange'),
+            document.getElementById('kpiCpmChangeText'),
+            percentChange(currentCpm, previousCpm),
+            'cpm'
+        );
+
+        const selectedCount = clientSelectors.filter(check => check.checked).length;
+        const totalCount = clientSelectors.length;
+
+        if (selectedCount === 0) {
+            selectionCount.textContent = 'Nenhuma conta selecionada';
+            selectionClear.disabled = true;
+        } else if (selectedCount === totalCount) {
+            selectionCount.textContent = `${totalCount} ${totalCount === 1 ? 'conta selecionada' : 'contas selecionadas'}`;
+            selectionClear.disabled = false;
+        } else {
+            selectionCount.textContent = `${selectedCount} de ${totalCount} selecionadas`;
+            selectionClear.disabled = false;
+        }
+
+        if (selectAll) {
+            selectAll.checked = selectedCount === totalCount && totalCount > 0;
+            selectAll.indeterminate = selectedCount > 0 && selectedCount < totalCount;
+        }
+
+        clientSelectors.forEach(check => {
+            const row = check.closest('tr');
+            if (row) row.classList.toggle('client-selected', check.checked);
+        });
+    }
+
+    clientSelectors.forEach(check => {
+        check.addEventListener('change', calculateSelection);
+    });
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            clientSelectors.forEach(check => {
+                check.checked = this.checked;
+            });
+            calculateSelection();
+        });
+    }
+
+    if (selectionClear) {
+        selectionClear.addEventListener('click', function () {
+            clientSelectors.forEach(check => {
+                check.checked = false;
+            });
+            calculateSelection();
+        });
+    }
+
+    calculateSelection();
+
+    /* ============================================================
+       COLUNAS
+       ============================================================ */
+
+    const columnsButton = document.getElementById('columnsButton');
+    const columnsMenu = document.getElementById('columnsMenu');
+    const checks = document.querySelectorAll('.column-option input');
+
+    function updateColumns() {
+        checks.forEach(check => {
+            const visible = check.checked;
+            document.querySelectorAll(`[data-column="${check.dataset.column}"]`).forEach(
+                el => el.style.display = visible ? '' : 'none'
+            );
+        });
+
+        localStorage.setItem(
+            'prospecta_dashboard_columns',
+            JSON.stringify(
+                Object.fromEntries(
+                    Array.from(checks).map(c => [c.dataset.column, c.checked])
+                )
+            )
+        );
+    }
+
+    function loadColumns() {
+        try {
+            const saved = JSON.parse(
+                localStorage.getItem('prospecta_dashboard_columns') || 'null'
+            );
+            if (saved) {
+                checks.forEach(c => {
+                    if (Object.prototype.hasOwnProperty.call(saved, c.dataset.column)) {
+                        c.checked = saved[c.dataset.column];
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn('Configuração de colunas inválida.', e);
+        }
+        updateColumns();
+    }
+
+    if (columnsButton && columnsMenu) {
+        columnsButton.addEventListener('click', e => {
+            e.stopPropagation();
+            columnsMenu.classList.toggle('open');
+        });
+
+        document.addEventListener('click', e => {
+            if (!columnsMenu.contains(e.target) && !columnsButton.contains(e.target)) {
+                columnsMenu.classList.remove('open');
+            }
+        });
+    }
+
+    checks.forEach(c => c.addEventListener('change', updateColumns));
+
+    const reset = document.getElementById('columnsReset');
+    if (reset) {
+        reset.addEventListener('click', () => {
+            localStorage.removeItem('prospecta_dashboard_columns');
+            checks.forEach(c => {
+                c.checked = ['spend','conversations','cost_per_conversation','ctr','cpm'].includes(c.dataset.column);
+            });
+            updateColumns();
+        });
+    }
+
+    loadColumns();
+})();
+</script>
+{% endblock %}

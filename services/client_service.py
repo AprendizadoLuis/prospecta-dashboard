@@ -1,0 +1,158 @@
+from services.auth_service import get_db_connection
+
+
+CLIENT_STATUSES = {"draft", "active", "paused", "archived"}
+
+
+def _serialize_client(row):
+    if not row:
+        return None
+
+    return {
+        "id": str(row[0]),
+        "name": row[1],
+        "legal_name": row[2],
+        "document": row[3],
+        "contact_name": row[4],
+        "contact_email": row[5],
+        "contact_phone": row[6],
+        "website": row[7],
+        "segment": row[8],
+        "notes": row[9],
+        "status": row[10],
+        "is_active": row[11],
+        "meta_connection_status": row[12],
+        "meta_last_synced_at": row[13],
+    }
+
+
+CLIENT_COLUMNS = """
+    id,
+    name,
+    legal_name,
+    document,
+    contact_name,
+    contact_email,
+    contact_phone,
+    website,
+    segment,
+    notes,
+    status,
+    is_active,
+    meta_connection_status,
+    meta_last_synced_at
+"""
+
+
+def list_clients():
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT {CLIENT_COLUMNS}
+                FROM clients
+                ORDER BY
+                    CASE status
+                        WHEN 'active' THEN 1
+                        WHEN 'draft' THEN 2
+                        WHEN 'paused' THEN 3
+                        ELSE 4
+                    END,
+                    name
+                """
+            )
+            rows = cur.fetchall()
+
+    return [_serialize_client(row) for row in rows]
+
+
+def get_client(client_id):
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                f"""
+                SELECT {CLIENT_COLUMNS}
+                FROM clients
+                WHERE id = %s
+                """,
+                (client_id,),
+            )
+            return _serialize_client(cur.fetchone())
+
+
+def save_client(data, client_id=None):
+    values = (
+        data["name"],
+        data["legal_name"],
+        data["document"],
+        data["contact_name"],
+        data["contact_email"],
+        data["contact_phone"],
+        data["website"],
+        data["segment"],
+        data["notes"],
+        data["status"],
+    )
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            if client_id:
+                cur.execute(
+                    """
+                    UPDATE clients
+                    SET
+                        name = %s,
+                        legal_name = %s,
+                        document = %s,
+                        contact_name = %s,
+                        contact_email = %s,
+                        contact_phone = %s,
+                        website = %s,
+                        segment = %s,
+                        notes = %s,
+                        status = %s
+                    WHERE id = %s
+                    RETURNING id
+                    """,
+                    values + (client_id,),
+                )
+            else:
+                cur.execute(
+                    """
+                    INSERT INTO clients (
+                        name,
+                        legal_name,
+                        document,
+                        contact_name,
+                        contact_email,
+                        contact_phone,
+                        website,
+                        segment,
+                        notes,
+                        status
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    RETURNING id
+                    """,
+                    values,
+                )
+
+            row = cur.fetchone()
+
+        conn.commit()
+
+    return str(row[0]) if row else None
+
+
+def delete_client(client_id):
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM clients WHERE id = %s RETURNING id",
+                (client_id,),
+            )
+            row = cur.fetchone()
+
+        conn.commit()
+
+    return bool(row)

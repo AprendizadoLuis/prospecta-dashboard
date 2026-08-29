@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Contas Meta Ads | Prospecte OS{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/clients.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="clients-page meta-accounts-page">
+    <div class="topbar">
+        <div class="title">
+            <a href="{{ url_for('editar_cliente', client_id=client.id) }}" class="client-back-link"><i class="bi bi-arrow-left"></i> {{ client.name }}</a>
+            <h1>Contas Meta Ads</h1>
+            <p>Selecione as contas que pertencem a este cliente e podem alimentar o Overview.</p>
+        </div>
+    </div>
+
+    <form method="POST" class="panel meta-accounts-form">
+        <div class="panel-header">
+            <div>
+                <div class="panel-title">{{ connection.meta_user_name or 'Conta Meta conectada' }}</div>
+                <div class="panel-subtitle">{{ accounts|length }} conta{% if accounts|length != 1 %}s{% endif %} disponível{% if accounts|length != 1 %}is{% endif %}</div>
+            </div>
+        </div>
+
+        {% if accounts %}
+        <div class="meta-account-list">
+            {% for account in accounts %}
+            <label class="meta-account-option">
+                <input type="checkbox" name="account_ids" value="{{ account.id }}" {% if account.id in selected_account_ids %}checked{% endif %}>
+                <span class="meta-account-check"><i class="bi bi-check-lg"></i></span>
+                <span class="meta-account-icon"><i class="bi bi-megaphone"></i></span>
+                <span class="meta-account-info"><strong>{{ account.name or account.id }}</strong><small>{{ account.account_id or account.id }}{% if account.currency %} · {{ account.currency }}{% endif %}</small></span>
+                <span class="meta-account-status">{% if account.account_status == 1 %}Ativa{% else %}Status {{ account.account_status }}{% endif %}</span>
+            </label>
+            {% endfor %}
+        </div>
+        <div class="client-form-actions"><a href="{{ url_for('editar_cliente', client_id=client.id) }}" class="client-secondary-button">Cancelar</a><button type="submit" class="client-primary-button">Salvar contas selecionadas</button></div>
+        {% else %}
+        <div class="clients-empty"><span class="clients-empty-icon"><i class="bi bi-megaphone"></i></span><h2>Nenhuma conta disponível</h2><p>A conta Meta autorizada não possui contas de anúncio acessíveis.</p><a href="{{ url_for('editar_cliente', client_id=client.id) }}" class="client-secondary-button">Voltar ao cliente</a></div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

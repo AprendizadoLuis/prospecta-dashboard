@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}{% if is_edit %}Editar cliente{% else %}Novo cliente{% endif %} | Prospecte OS{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/clients.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="clients-page client-form-page">
+    <div class="topbar">
+        <div class="title">
+            <a href="{{ url_for('clientes') }}" class="client-back-link"><i class="bi bi-arrow-left"></i> Clientes</a>
+            <h1>{% if is_edit %}Editar cliente{% else %}Novo cliente{% endif %}</h1>
+            <p>{% if is_edit %}Atualize as informações e o status operacional deste cliente.{% else %}Cadastre o cliente antes de conectar as contas da Meta Ads.{% endif %}</p>
+        </div>
+    </div>
+
+    {% if error %}<div class="client-notice client-notice-error"><i class="bi bi-exclamation-circle"></i>{{ error }}</div>{% endif %}
+
+    {% if is_edit %}
+    {% if meta_message %}<div class="client-notice client-notice-success"><i class="bi bi-check-circle"></i>{{ meta_message }}</div>{% endif %}
+    {% if meta_error %}<div class="client-notice client-notice-error"><i class="bi bi-exclamation-circle"></i>{{ meta_error }}</div>{% endif %}
+    <section class="panel client-meta-card">
+        <div class="client-meta-card-icon"><i class="bi bi-meta"></i></div>
+        <div class="client-meta-card-content">
+            <div class="panel-title">Meta Ads</div>
+            {% if meta_connection %}
+            <p>Conectado como <strong>{{ meta_connection.meta_user_name or 'usuário Meta' }}</strong>. Escolha as contas que devem fazer parte deste cliente.</p>
+            <span class="client-status client-status-active"><i class="bi bi-check-circle-fill"></i> Conectada</span>
+            {% else %}
+            <p>Conecte a conta Meta do cliente para selecionar contas de anúncio e trazer métricas para o Overview.</p>
+            <span class="client-status client-status-draft"><i class="bi bi-link-45deg"></i> Não conectada</span>
+            {% endif %}
+        </div>
+        <div class="client-meta-card-actions">
+            {% if meta_connection %}
+            <a href="{{ url_for('selecionar_contas_meta', client_id=client.id) }}" class="client-secondary-button">Gerenciar contas</a>
+            <a href="{{ url_for('conectar_meta_cliente', client_id=client.id) }}" class="client-primary-button">Reconectar</a>
+            <form method="POST" action="{{ url_for('desconectar_meta_cliente', client_id=client.id) }}" onsubmit="return confirm('Desconectar a Meta Ads deste cliente?');"><button type="submit" class="client-meta-disconnect" title="Desconectar Meta Ads" aria-label="Desconectar Meta Ads"><i class="bi bi-x-lg"></i></button></form>
+            {% else %}
+            <a href="{{ url_for('conectar_meta_cliente', client_id=client.id) }}" class="client-primary-button"><i class="bi bi-meta"></i> Conectar Meta Ads</a>
+            {% endif %}
+        </div>
+    </section>
+    {% endif %}
+
+    <form method="POST" class="panel client-form">
+        <div class="panel-header"><div><div class="panel-title">Informações do cliente</div><div class="panel-subtitle">Os campos marcados com * são obrigatórios.</div></div></div>
+        <div class="client-form-body">
+            <div class="client-form-grid">
+                <label class="client-field client-field-wide"><span>Nome do cliente *</span><input name="name" value="{{ client.name or '' }}" required autofocus placeholder="Ex.: Apollo Marketing"></label>
+                <label class="client-field"><span>Razão social</span><input name="legal_name" value="{{ client.legal_name or '' }}" placeholder="Ex.: Apollo Marketing Ltda."></label>
+                <label class="client-field"><span>CNPJ ou CPF</span><input name="document" value="{{ client.document or '' }}" placeholder="00.000.000/0001-00"></label>
+                <label class="client-field"><span>Responsável</span><input name="contact_name" value="{{ client.contact_name or '' }}" placeholder="Nome do contato"></label>
+                <label class="client-field"><span>E-mail de contato</span><input type="email" name="contact_email" value="{{ client.contact_email or '' }}" placeholder="contato@empresa.com"></label>
+                <label class="client-field"><span>Telefone</span><input name="contact_phone" value="{{ client.contact_phone or '' }}" placeholder="(00) 00000-0000"></label>
+                <label class="client-field"><span>Site</span><input type="url" name="website" value="{{ client.website or '' }}" placeholder="https://empresa.com"></label>
+                <label class="client-field"><span>Segmento</span><input name="segment" value="{{ client.segment or '' }}" placeholder="Ex.: E-commerce"></label>
+                <label class="client-field"><span>Status</span><select name="status"><option value="draft" {% if client.status == 'draft' %}selected{% endif %}>Rascunho</option><option value="active" {% if client.status == 'active' %}selected{% endif %}>Ativo</option><option value="paused" {% if client.status == 'paused' %}selected{% endif %}>Pausado</option><option value="archived" {% if client.status == 'archived' %}selected{% endif %}>Arquivado</option></select></label>
+                <label class="client-field client-field-wide"><span>Observações</span><textarea name="notes" rows="4" placeholder="Informações relevantes sobre o cliente.">{{ client.notes or '' }}</textarea></label>
+            </div>
+        </div>
+        <div class="client-form-actions"><a href="{{ url_for('clientes') }}" class="client-secondary-button">Cancelar</a><button type="submit" class="client-primary-button">{% if is_edit %}Salvar alterações{% else %}Criar cliente{% endif %}</button></div>
+    </form>
+</div>
+{% endblock %}

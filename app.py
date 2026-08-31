@@ -1,3 +1,4 @@
+
 import os
 import secrets
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -731,9 +732,10 @@ def get_account_insights(
                     account_id,
 
                 "name":
-                    account.get(
-                        "name",
-                        "Sem nome"
+                    (
+                        account.get("client_name")
+                        or account.get("name")
+                        or "Sem nome"
                     ),
 
                 "account_id":
@@ -920,9 +922,10 @@ def get_account_insights(
                 account_id,
 
             "name":
-                account.get(
-                    "name",
-                    "Sem nome"
+                (
+                    account.get("client_name")
+                    or account.get("name")
+                    or "Sem nome"
                 ),
 
             "account_id":
@@ -968,9 +971,10 @@ def get_account_insights(
                 account_id,
 
             "name":
-                account.get(
-                    "name",
-                    "Sem nome"
+                (
+                    account.get("client_name")
+                    or account.get("name")
+                    or "Sem nome"
                 ),
 
             "account_id":
@@ -1270,7 +1274,11 @@ def home():
                     continue
 
                 account = dict(account)
+
+                # Identificação da conta
                 account["client_id"] = str(client_id)
+
+                # Nome do cliente cadastrado no sistema
                 account["client_name"] = (
                     client.get("name")
                     or "Cliente sem nome"

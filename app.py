@@ -284,14 +284,15 @@ def validate_client_form(data):
     return None
 
 
-@app.route("/clientes")
-@login_required
-
 def list_users_for_assignment():
+    """
+    Retorna os usuários ativos disponíveis para serem vinculados
+    como gestores/responsáveis dos clientes.
+    """
     with get_db_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT id, name, email
+                SELECT id, name, email, role
                 FROM users
                 WHERE is_active = TRUE
                 ORDER BY name
@@ -303,23 +304,30 @@ def list_users_for_assignment():
             "id": str(row[0]),
             "name": row[1],
             "email": row[2],
+            "role": row[3],
         }
         for row in rows
     ]
 
+
+@app.route("/clientes")
+@login_required
 def clientes():
     try:
         clients = list_clients()
+        users = list_users_for_assignment()
         error = None
     except Exception as exc:
         print(f"ERRO AO LISTAR CLIENTES: {exc}")
         clients = []
+        users = []
         error = "Não foi possível carregar os clientes. Tente novamente."
 
     return render_template(
         "clientes.html",
         active_page="clientes",
         clients=clients,
+        users=users,
         error=error,
         message=request.args.get("message"),
     )
@@ -328,8 +336,18 @@ def clientes():
 @app.route("/clientes/novo", methods=["GET", "POST"])
 @login_required
 def novo_cliente():
-    client = {"status": "draft"}
+    client = {
+        "status": "draft",
+        "responsible_user_id": None,
+    }
     error = None
+
+    try:
+        users = list_users_for_assignment()
+    except Exception as exc:
+        print(f"ERRO AO LISTAR USUÁRIOS PARA CLIENTE: {exc}")
+        users = []
+        error = "Não foi possível carregar os gestores disponíveis."
 
     if request.method == "POST":
         client = get_client_form_data()
@@ -338,15 +356,24 @@ def novo_cliente():
         if not error:
             try:
                 save_client(client)
-                return redirect(url_for("clientes", message="Cliente criado com sucesso."))
+                return redirect(
+                    url_for(
+                        "clientes",
+                        message="Cliente criado com sucesso.",
+                    )
+                )
             except Exception as exc:
                 print(f"ERRO AO CRIAR CLIENTE: {exc}")
-                error = "Não foi possível criar o cliente. Verifique os dados e tente novamente."
+                error = (
+                    "Não foi possível criar o cliente. "
+                    "Verifique os dados e tente novamente."
+                )
 
     return render_template(
         "cliente_form.html",
         active_page="clientes",
         client=client,
+        users=users,
         error=error,
         is_edit=False,
     )
@@ -362,9 +389,21 @@ def editar_cliente(client_id):
         client = None
 
     if not client:
-        return redirect(url_for("clientes", message="Cliente não encontrado."))
+        return redirect(
+            url_for(
+                "clientes",
+                message="Cliente não encontrado.",
+            )
+        )
 
     error = None
+
+    try:
+        users = list_users_for_assignment()
+    except Exception as exc:
+        print(f"ERRO AO LISTAR USUÁRIOS PARA CLIENTE: {exc}")
+        users = []
+        error = "Não foi possível carregar os gestores disponíveis."
 
     if request.method == "POST":
         client = get_client_form_data()
@@ -374,7 +413,12 @@ def editar_cliente(client_id):
         if not error:
             try:
                 save_client(client, client_id)
-                return redirect(url_for("clientes", message="Cliente atualizado com sucesso."))
+                return redirect(
+                    url_for(
+                        "clientes",
+                        message="Cliente atualizado com sucesso.",
+                    )
+                )
             except Exception as exc:
                 print(f"ERRO AO ATUALIZAR CLIENTE: {exc}")
                 error = "Não foi possível atualizar o cliente. Tente novamente."
@@ -383,6 +427,7 @@ def editar_cliente(client_id):
         "cliente_form.html",
         active_page="clientes",
         client=client,
+        users=users,
         error=error,
         is_edit=True,
         meta_connection=get_client_connection(client_id),

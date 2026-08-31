@@ -764,6 +764,19 @@ def get_account_insights(
                         ""
                     ),
 
+                # Dados do gestor responsável pelo cliente.
+                "client_id":
+                    account.get("client_id"),
+
+                "responsible_user_id":
+                    account.get("responsible_user_id"),
+
+                "responsible_user_name":
+                    account.get(
+                        "responsible_user_name",
+                        "Sem gestor"
+                    ),
+
                 "spend":
                     0,
 
@@ -954,6 +967,21 @@ def get_account_insights(
                     ""
                 ),
 
+            # Dados do gestor responsável pelo cliente.
+            # Precisam ser preservados aqui porque esta função
+            # cria um novo dicionário para as métricas da conta.
+            "client_id":
+                account.get("client_id"),
+
+            "responsible_user_id":
+                account.get("responsible_user_id"),
+
+            "responsible_user_name":
+                account.get(
+                    "responsible_user_name",
+                    "Sem gestor"
+                ),
+
             "spend":
                 spend,
 
@@ -1001,6 +1029,21 @@ def get_account_insights(
                 account.get(
                     "account_id",
                     ""
+                ),
+
+            # Dados do gestor responsável pelo cliente.
+            # Precisam ser preservados aqui porque esta função
+            # cria um novo dicionário para as métricas da conta.
+            "client_id":
+                account.get("client_id"),
+
+            "responsible_user_id":
+                account.get("responsible_user_id"),
+
+            "responsible_user_name":
+                account.get(
+                    "responsible_user_name",
+                    "Sem gestor"
                 ),
 
             "spend":
@@ -1194,6 +1237,11 @@ def home():
         since = default_since
         until = default_until
 
+    # Gestor selecionado no filtro do Overview.
+    # Quando informado, somente os clientes vinculados a esse gestor
+    # serão consultados e exibidos.
+    selected_gestor = request.args.get("gestor", "").strip() or None
+
     previous_since, previous_until = get_previous_period(
         since,
         until
@@ -1246,7 +1294,8 @@ def home():
             critical_count=0,
             warning_count=0,
             healthy_count=0,
-            gestores=[]
+            gestores=[],
+            selected_gestor=selected_gestor
         )
 
     # ========================================================
@@ -1256,6 +1305,15 @@ def home():
     connected_accounts = []
 
     for client in clients:
+
+        # Se houver gestor selecionado, não consulta clientes
+        # que não pertencem a ele. Isso também deixa o Overview
+        # mais rápido porque evita chamadas desnecessárias à Meta.
+        if selected_gestor:
+            client_responsible_id = client.get("responsible_user_id")
+
+            if str(client_responsible_id or "") != str(selected_gestor):
+                continue
 
         client_id = client.get("id")
 
@@ -1573,6 +1631,7 @@ def home():
         active_page="overview",
         accounts=results,
         gestores=gestores,
+        selected_gestor=selected_gestor,
         error=None,
         since=since,
         until=until,

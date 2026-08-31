@@ -1249,94 +1249,116 @@ def home():
             gestores=[]
         )
 
-    # ========================================================
-    # BUSCAR CONTAS DOS CLIENTES CONECTADOS
-    # ========================================================
+# ========================================================
+# BUSCAR CONTAS DOS CLIENTES CONECTADOS
+# ========================================================
 
-    connected_accounts = []
+connected_accounts = []
 
-    for client in clients:
+for client in clients:
 
-        client_id = client.get("id")
+    client_id = client.get("id")
 
-        if not client_id:
+    if not client_id:
+        continue
+
+    try:
+        connection = get_client_connection(
+            client_id,
+            include_token=True
+        )
+
+        if not connection:
             continue
 
-        try:
-            connection = get_client_connection(
-                client_id,
-                include_token=True
-            )
-
-            if not connection:
-                continue
-
-            if connection.get("status") != "connected":
-                continue
-
-            access_token = connection.get("access_token")
-
-            if not access_token:
-                continue
-
-            selected_ids = get_selected_ad_account_ids(
-                client_id
-            )
-
-            if not selected_ids:
-                continue
-
-            meta_accounts = get_client_meta_ad_accounts(
-                access_token
-            )
-
-            for account in meta_accounts:
-
-                if account.get("id") not in selected_ids:
-                    continue
-
-                account = dict(account)
-
-                # Identificação da conta
-                account["client_id"] = str(client_id)
-
-                # Nome do cliente cadastrado no sistema
-                account["client_name"] = (
-                    client.get("name")
-                    or "Cliente sem nome"
-                )
-
-                # Gestor responsável pelo cliente
-                account["responsible_user_id"] = client.get("responsible_user_id")
-                account["responsible_user_name"] = next(
-                    (
-                        gestor.get("name")
-                        for gestor in gestores
-                        if str(gestor.get("id")) == str(client.get("responsible_user_id"))
-                    ),
-                    "Sem gestor"
-                )
-
-                connected_accounts.append(
-                    (
-                        account,
-                        access_token
-                    )
-                )
-
-        except MetaOAuthError as exc:
-            print(
-                f"ERRO META NO CLIENTE {client_id}: {exc}"
-            )
+        if connection.get("status") != "connected":
             continue
 
-        except Exception as exc:
-            print(
-                f"ERRO AO CARREGAR META DO CLIENTE "
-                f"{client_id}: {exc}"
-            )
+        access_token = connection.get("access_token")
+
+        if not access_token:
             continue
 
+        selected_ids = get_selected_ad_account_ids(
+            client_id
+        )
+
+        if not selected_ids:
+            continue
+
+        meta_accounts = get_client_meta_ad_accounts(
+            access_token
+        )
+
+        for account in meta_accounts:
+
+            if account.get("id") not in selected_ids:
+                continue
+
+            account = dict(account)
+
+            # ========================================================
+            # IDENTIFICAÇÃO DO CLIENTE
+            # ========================================================
+
+            account["client_id"] = str(client_id)
+
+            account["client_name"] = (
+                client.get("name")
+                or "Cliente sem nome"
+            )
+
+            # ========================================================
+            # GESTOR RESPONSÁVEL
+            # ========================================================
+
+            responsible_user_id = client.get(
+                "responsible_user_id"
+            )
+
+            account["responsible_user_id"] = (
+                str(responsible_user_id)
+                if responsible_user_id
+                else None
+            )
+
+            account["responsible_user_name"] = next(
+                (
+                    gestor.get("name")
+                    for gestor in gestores
+                    if str(gestor.get("id"))
+                    == str(responsible_user_id)
+                ),
+                "Sem gestor"
+            )
+
+            # ========================================================
+            # ADICIONA CONTA
+            # ========================================================
+
+            connected_accounts.append(
+                (
+                    account,
+                    access_token
+                )
+            )
+
+    except MetaOAuthError as exc:
+
+        print(
+            f"ERRO META NO CLIENTE {client_id}: {exc}"
+        )
+
+        continue
+
+    except Exception as exc:
+
+        print(
+            f"ERRO AO CARREGAR META DO CLIENTE "
+            f"{client_id}: {exc}"
+        )
+
+        continue
     # ========================================================
     # BUSCAR PERÍODO ATUAL + PERÍODO ANTERIOR
     # ========================================================

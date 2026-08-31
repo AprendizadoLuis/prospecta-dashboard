@@ -1769,34 +1769,20 @@ def _get_task(task_id):
 
 
 def _can_view_task(task):
-    if not task:
-        return False
-
-    if _task_is_admin():
-        return True
-
-    current_user = _task_current_user_id()
-
-    return (
-        task["visibility"] == "public"
-        or current_user in {
-            task["created_by"],
-            task["assigned_to"],
-        }
-    )
+    """
+    Neste momento todos os usuários autenticados
+    podem visualizar qualquer tarefa.
+    """
+    return bool(task)
 
 
 def _can_manage_task(task):
-    if not task:
-        return False
-
-    if _task_is_admin():
-        return True
-
-    return (
-        _task_is_gestor()
-        and task["assigned_to"] == _task_current_user_id()
-    )
+    """
+    Neste momento todos os usuários autenticados
+    podem editar, concluir, alterar status e excluir
+    qualquer tarefa.
+    """
+    return bool(task)
 
 
 def _list_tasks():
@@ -1948,9 +1934,9 @@ def tarefas():
 def criar_tarefa():
     data = _get_task_form_data()
 
-    # Usuário comum/gestor cria a tarefa para si.
-    if not _task_is_admin():
-        data["assigned_to"] = _task_current_user_id()
+    data = _get_task_form_data()
+
+    error = _validate_task_data(data)
 
     error = _validate_task_data(data)
 

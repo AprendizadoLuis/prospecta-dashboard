@@ -286,6 +286,27 @@ def validate_client_form(data):
 
 @app.route("/clientes")
 @login_required
+
+def list_users_for_assignment():
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, name, email
+                FROM users
+                WHERE is_active = TRUE
+                ORDER BY name
+            """)
+            rows = cur.fetchall()
+
+    return [
+        {
+            "id": str(row[0]),
+            "name": row[1],
+            "email": row[2],
+        }
+        for row in rows
+    ]
+
 def clientes():
     try:
         clients = list_clients()

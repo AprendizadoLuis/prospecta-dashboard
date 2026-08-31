@@ -24,6 +24,11 @@
             class="nav-link menu-item {% if active_page == 'clientes' %}active{% endif %}" title="Clientes"
             data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-people-fill menu-icon"></i><span
                 class="menu-text">Clientes</span></a>
+        <a href="{{ url_for('tarefas') }}" class="nav-link menu-item {% if active_page == 'tarefas' %}active{% endif %}"
+            title="Tarefas" data-bs-toggle="tooltip" data-bs-placement="right">
+            <i class="bi bi-check2-square menu-icon"></i>
+            <span class="menu-text">Tarefas</span>
+        </a>
         <a href="#" class="nav-link menu-item" title="Campanhas" data-bs-toggle="tooltip" data-bs-placement="right"><i
                 class="bi bi-bullseye menu-icon"></i><span class="menu-text">Campanhas</span></a>
         <a href="#" class="nav-link menu-item" title="Anúncios" data-bs-toggle="tooltip" data-bs-placement="right"><i

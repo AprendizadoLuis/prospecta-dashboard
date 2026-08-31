@@ -23,24 +23,28 @@ def _serialize_client(row):
         "is_active": row[11],
         "meta_connection_status": row[12],
         "meta_last_synced_at": row[13],
+        "responsible_user_id": str(row[14]) if row[14] else None,
+        "responsible_name": row[15],
     }
 
 
 CLIENT_COLUMNS = """
-    id,
-    name,
-    legal_name,
-    document,
-    contact_name,
-    contact_email,
-    contact_phone,
-    website,
-    segment,
-    notes,
-    status,
-    is_active,
-    meta_connection_status,
-    meta_last_synced_at
+    c.id,
+    c.name,
+    c.legal_name,
+    c.document,
+    c.contact_name,
+    c.contact_email,
+    c.contact_phone,
+    c.website,
+    c.segment,
+    c.notes,
+    c.status,
+    c.is_active,
+    c.meta_connection_status,
+    c.meta_last_synced_at,
+    c.responsible_user_id,
+    u.name AS responsible_name
 """
 
 
@@ -50,17 +54,20 @@ def list_clients():
             cur.execute(
                 f"""
                 SELECT {CLIENT_COLUMNS}
-                FROM clients
+                FROM clients c
+                LEFT JOIN users u
+                    ON u.id = c.responsible_user_id
                 ORDER BY
-                    CASE status
+                    CASE c.status
                         WHEN 'active' THEN 1
                         WHEN 'draft' THEN 2
                         WHEN 'paused' THEN 3
                         ELSE 4
                     END,
-                    name
+                    c.name
                 """
             )
+
             rows = cur.fetchall()
 
     return [_serialize_client(row) for row in rows]
@@ -72,11 +79,14 @@ def get_client(client_id):
             cur.execute(
                 f"""
                 SELECT {CLIENT_COLUMNS}
-                FROM clients
-                WHERE id = %s
+                FROM clients c
+                LEFT JOIN users u
+                    ON u.id = c.responsible_user_id
+                WHERE c.id = %s
                 """,
                 (client_id,),
             )
+
             return _serialize_client(cur.fetchone())
 
 
@@ -92,11 +102,14 @@ def save_client(data, client_id=None):
         data["segment"],
         data["notes"],
         data["status"],
+        data.get("responsible_user_id") or None,
     )
 
     with get_db_connection() as conn:
         with conn.cursor() as cur:
+
             if client_id:
+
                 cur.execute(
                     """
                     UPDATE clients
@@ -110,13 +123,16 @@ def save_client(data, client_id=None):
                         website = %s,
                         segment = %s,
                         notes = %s,
-                        status = %s
+                        status = %s,
+                        responsible_user_id = %s
                     WHERE id = %s
                     RETURNING id
                     """,
                     values + (client_id,),
                 )
+
             else:
+
                 cur.execute(
                     """
                     INSERT INTO clients (
@@ -129,9 +145,13 @@ def save_client(data, client_id=None):
                         website,
                         segment,
                         notes,
-                        status
+                        status,
+                        responsible_user_id
                     )
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (
+                        %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s
+                    )
                     RETURNING id
                     """,
                     values,
@@ -147,10 +167,16 @@ def save_client(data, client_id=None):
 def delete_client(client_id):
     with get_db_connection() as conn:
         with conn.cursor() as cur:
+
             cur.execute(
-                "DELETE FROM clients WHERE id = %s RETURNING id",
+                """
+                DELETE FROM clients
+                WHERE id = %s
+                RETURNING id
+                """,
                 (client_id,),
             )
+
             row = cur.fetchone()
 
         conn.commit()

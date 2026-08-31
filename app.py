@@ -247,6 +247,7 @@ def get_client_form_data():
         "segment": request.form.get("segment", "").strip() or None,
         "notes": request.form.get("notes", "").strip() or None,
         "status": request.form.get("status", "draft"),
+        "responsible_user_id": request.form.get("responsible_user_id") or None,
     }
 
 
@@ -285,6 +286,28 @@ def clientes():
 
 @app.route("/clientes/novo", methods=["GET", "POST"])
 @login_required
+
+def list_users_for_assignment():
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, name, email
+                FROM users
+                WHERE is_active = TRUE
+                ORDER BY name
+            """)
+
+            rows = cur.fetchall()
+
+    return [
+        {
+            "id": str(row[0]),
+            "name": row[1],
+            "email": row[2],
+        }
+        for row in rows
+    ]
+
 def novo_cliente():
     client = {"status": "draft"}
     error = None
@@ -302,12 +325,13 @@ def novo_cliente():
                 error = "Não foi possível criar o cliente. Verifique os dados e tente novamente."
 
     return render_template(
-        "cliente_form.html",
-        active_page="clientes",
-        client=client,
-        error=error,
-        is_edit=False,
-    )
+    "cliente_form.html",
+    active_page="clientes",
+    client=client,
+    error=error,
+    is_edit=False,
+    users=list_users_for_assignment(),
+)
 
 
 @app.route("/clientes/<uuid:client_id>/editar", methods=["GET", "POST"])
@@ -338,15 +362,16 @@ def editar_cliente(client_id):
                 error = "Não foi possível atualizar o cliente. Tente novamente."
 
     return render_template(
-        "cliente_form.html",
-        active_page="clientes",
-        client=client,
-        error=error,
-        is_edit=True,
-        meta_connection=get_client_connection(client_id),
-        meta_message=request.args.get("meta_message"),
-        meta_error=request.args.get("meta_error"),
-    )
+    "cliente_form.html",
+    active_page="clientes",
+    client=client,
+    error=error,
+    is_edit=True,
+    users=list_users_for_assignment(),
+    meta_connection=get_client_connection(client_id),
+    meta_message=request.args.get("meta_message"),
+    meta_error=request.args.get("meta_error"),
+)
 
 
 @app.route("/clientes/<uuid:client_id>/excluir", methods=["POST"])

@@ -320,12 +320,13 @@ def novo_cliente():
                 error = "Não foi possível criar o cliente. Verifique os dados e tente novamente."
 
     return render_template(
-        "cliente_form.html",
-        active_page="clientes",
-        client=client,
-        error=error,
-        is_edit=False,
-    )
+    "cliente_form.html",
+    active_page="clientes",
+    client=client,
+    error=error,
+    is_edit=False,
+    gestores=list_users(),
+)
 
 
 @app.route("/clientes/<uuid:client_id>/editar", methods=["GET", "POST"])
@@ -356,15 +357,16 @@ def editar_cliente(client_id):
                 error = "Não foi possível atualizar o cliente. Tente novamente."
 
     return render_template(
-        "cliente_form.html",
-        active_page="clientes",
-        client=client,
-        error=error,
-        is_edit=True,
-        meta_connection=get_client_connection(client_id),
-        meta_message=request.args.get("meta_message"),
-        meta_error=request.args.get("meta_error"),
-    )
+    "cliente_form.html",
+    active_page="clientes",
+    client=client,
+    error=error,
+    is_edit=True,
+    gestores=list_users(),
+    meta_connection=get_client_connection(client_id),
+    meta_message=request.args.get("meta_message"),
+    meta_error=request.args.get("meta_error"),
+)
 
 
 @app.route("/clientes/<uuid:client_id>/excluir", methods=["POST"])

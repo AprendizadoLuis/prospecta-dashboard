@@ -7,6 +7,35 @@
     rel="stylesheet"
     href="{{ url_for('static', filename='css/tasks.css') }}"
 >
+
+<style>
+    .task-status-form {
+        display: inline-flex;
+        margin: 0;
+    }
+
+    .task-check-button {
+        border: 0;
+        background: transparent;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        line-height: 1;
+    }
+
+    .task-check-button:focus-visible {
+        outline: 2px solid #1769ff;
+        outline-offset: 4px;
+        border-radius: 50%;
+    }
+
+    .task-actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+</style>
+
 {% endblock %}
 
 {% block content %}
@@ -225,15 +254,39 @@
 
                         {% if task.status == "completed" %}
 
-                            <span class="task-completed-icon">
-                                <i class="bi bi-check-circle-fill"></i>
-                            </span>
+                            <form
+                                method="POST"
+                                action="{{ url_for('alterar_status_tarefa', task_id=task.id) }}"
+                                class="task-status-form"
+                            >
+                                <input type="hidden" name="status" value="pending">
+
+                                <button
+                                    type="submit"
+                                    class="task-check-button task-completed-icon"
+                                    title="Reabrir tarefa"
+                                    aria-label="Reabrir tarefa"
+                                >
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </button>
+                            </form>
 
                         {% else %}
 
-                            <span class="task-pending-icon">
-                                <i class="bi bi-circle"></i>
-                            </span>
+                            <form
+                                method="POST"
+                                action="{{ url_for('concluir_tarefa', task_id=task.id) }}"
+                                class="task-status-form"
+                            >
+                                <button
+                                    type="submit"
+                                    class="task-check-button task-pending-icon"
+                                    title="Concluir tarefa"
+                                    aria-label="Concluir tarefa"
+                                >
+                                    <i class="bi bi-circle"></i>
+                                </button>
+                            </form>
 
                         {% endif %}
 
@@ -338,9 +391,26 @@
                             href="{{ url_for('editar_tarefa', task_id=task.id) }}"
                             class="btn btn-sm btn-light"
                             title="Editar tarefa"
+                            aria-label="Editar tarefa"
                         >
                             <i class="bi bi-pencil"></i>
                         </a>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('excluir_tarefa', task_id=task.id) }}"
+                            class="d-inline"
+                            onsubmit="return confirm('Tem certeza que deseja excluir esta tarefa? Esta ação não poderá ser desfeita.');"
+                        >
+                            <button
+                                type="submit"
+                                class="btn btn-sm btn-light text-danger"
+                                title="Excluir tarefa"
+                                aria-label="Excluir tarefa"
+                            >
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
 
                     </div>
 
@@ -502,48 +572,26 @@
                                 Responsável *
                             </label>
 
-                            {% if session.get("user_role") == "admin" %}
+                            <select
+                                id="taskAssignedTo"
+                                name="assigned_to"
+                                class="form-select"
+                                required
+                            >
+                                <option value="">
+                                    Selecione o responsável
+                                </option>
 
-                                <select
-                                    id="taskAssignedTo"
-                                    name="assigned_to"
-                                    class="form-select"
-                                    required
-                                >
-                                    <option value="">
-                                        Selecione o responsável
+                                {% for user in users %}
+                                    <option value="{{ user.id }}">
+                                        {{ user.name }}
                                     </option>
+                                {% endfor %}
+                            </select>
 
-                                    {% for user in users %}
-                                        <option value="{{ user.id }}">
-                                            {{ user.name }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-
-                                <div class="form-text">
-                                    Como administrador, você pode atribuir a tarefa a qualquer usuário.
-                                </div>
-
-                            {% else %}
-
-                                <input
-                                    type="hidden"
-                                    id="taskAssignedTo"
-                                    name="assigned_to"
-                                    value="{{ session.get('user_id') }}"
-                                >
-
-                                <div class="form-control d-flex align-items-center bg-light">
-                                    <i class="bi bi-person me-2 text-primary"></i>
-                                    <span>{{ session.get("user_name", "Você") }}</span>
-                                </div>
-
-                                <div class="form-text">
-                                    A tarefa será atribuída a você.
-                                </div>
-
-                            {% endif %}
+                            <div class="form-text">
+                                Selecione qualquer usuário como responsável.
+                            </div>
 
                         </div>
 

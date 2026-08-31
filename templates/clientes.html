@@ -5,62 +5,16 @@
 {% block page_styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/components.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/clients.css') }}">
-
-<style>
-    .client-responsible {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        white-space: nowrap;
-    }
-
-    .client-responsible-avatar {
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: #eef4ff;
-        color: #1769ff;
-        font-size: 12px;
-        font-weight: 800;
-        flex-shrink: 0;
-    }
-
-    .client-responsible strong {
-        color: #29456f;
-        font-size: 13px;
-    }
-
-    .client-empty {
-        color: #9aa9bd;
-        font-size: 13px;
-    }
-
-    .clients-table th {
-        white-space: nowrap;
-    }
-
-    @media (max-width: 1100px) {
-        .clients-table {
-            min-width: 950px;
-        }
-    }
-</style>
 {% endblock %}
 
 {% block content %}
-
 <div class="clients-page">
 
-    <!-- TOPO -->
     <div class="topbar">
-
         <div class="title">
             <h1>Clientes</h1>
             <p>
-                Gerencie os clientes que serão acompanhados no Overview.
+                Gerencie os clientes e os gestores responsáveis por cada projeto.
             </p>
         </div>
 
@@ -71,106 +25,59 @@
             <i class="bi bi-plus-lg"></i>
             Novo cliente
         </a>
-
     </div>
 
-
-    <!-- MENSAGEM DE SUCESSO -->
     {% if message %}
-
     <div class="client-notice client-notice-success">
-
         <i class="bi bi-check-circle"></i>
-
         {{ message }}
-
     </div>
-
     {% endif %}
 
-
-    <!-- MENSAGEM DE ERRO -->
     {% if error %}
-
     <div class="client-notice client-notice-error">
-
         <i class="bi bi-exclamation-circle"></i>
-
         {{ error }}
-
     </div>
-
     {% endif %}
 
-
-    <!-- PAINEL -->
     <section class="panel clients-panel">
 
-        <!-- CABEÇALHO -->
         <div class="panel-header">
 
             <div>
-
                 <div class="panel-title">
                     Base de clientes
                 </div>
 
                 <div class="panel-subtitle">
-                    Apenas clientes ativos aparecerão no Overview após a conexão com a Meta Ads.
+                    Vincule cada cliente a um gestor para organizar as tarefas por responsável.
                 </div>
-
             </div>
 
             <span class="client-count">
-
                 {{ clients|length }}
-
                 cliente{% if clients|length != 1 %}s{% endif %}
-
             </span>
 
         </div>
 
-
         {% if clients %}
 
-        <!-- TABELA -->
         <div class="table-wrapper">
 
             <table class="clients-table">
 
                 <thead>
-
                     <tr>
-
-                        <th>
-                            Cliente
-                        </th>
-
-                        <th>
-                            Contato
-                        </th>
-
-                        <th>
-                            Responsável
-                        </th>
-
-                        <th>
-                            Status
-                        </th>
-
-                        <th>
-                            Meta Ads
-                        </th>
-
-                        <th class="client-actions-heading">
-                            Ações
-                        </th>
-
+                        <th>Cliente</th>
+                        <th>Gestor</th>
+                        <th>Contato</th>
+                        <th>Status</th>
+                        <th>Meta Ads</th>
+                        <th class="client-actions-heading">Ações</th>
                     </tr>
-
                 </thead>
-
 
                 <tbody>
 
@@ -178,9 +85,7 @@
 
                     <tr>
 
-                        <!-- CLIENTE -->
                         <td>
-
                             <div class="clients-identity">
 
                                 <span class="clients-avatar">
@@ -188,93 +93,65 @@
                                 </span>
 
                                 <span>
-
-                                    <strong>
-                                        {{ client.name }}
-                                    </strong>
+                                    <strong>{{ client.name }}</strong>
 
                                     {% if client.segment %}
-
-                                    <small>
-                                        {{ client.segment }}
-                                    </small>
-
+                                    <small>{{ client.segment }}</small>
                                     {% endif %}
-
                                 </span>
 
                             </div>
-
                         </td>
 
-
-                        <!-- CONTATO -->
-                        <td>
-
-                            {% if client.contact_name %}
-
-                            <strong>
-                                {{ client.contact_name }}
-                            </strong>
-
-                            {% endif %}
-
-
-                            {% if client.contact_email %}
-
-                            <small>
-                                {{ client.contact_email }}
-                            </small>
-
-                            {% endif %}
-
-
-                            {% if not client.contact_name and not client.contact_email %}
-
-                            <span class="client-empty">
-                                Não informado
-                            </span>
-
-                            {% endif %}
-
-                        </td>
-
-
-                        <!-- RESPONSÁVEL -->
                         <td>
 
                             {% if client.responsible_name %}
+                            <div class="clients-identity">
 
-                            <div class="client-responsible">
-
-                                <span class="client-responsible-avatar">
+                                <span class="clients-avatar">
                                     {{ client.responsible_name[0]|upper }}
                                 </span>
 
-                                <strong>
-                                    {{ client.responsible_name }}
-                                </strong>
+                                <span>
+                                    <strong>{{ client.responsible_name }}</strong>
+                                    <small>Gestor</small>
+                                </span>
 
                             </div>
 
-                            {% else %}
-
+                            {% elif client.responsible_user_id %}
                             <span class="client-empty">
-                                Não definido
+                                Usuário vinculado
                             </span>
 
+                            {% else %}
+                            <span class="client-empty">
+                                Sem gestor
+                            </span>
                             {% endif %}
 
                         </td>
 
-
-                        <!-- STATUS -->
                         <td>
 
-                            <span
-                                class="client-status client-status-{{ client.status }}"
-                            >
+                            {% if client.contact_name %}
+                            <strong>{{ client.contact_name }}</strong>
+                            {% endif %}
 
+                            {% if client.contact_email %}
+                            <small>{{ client.contact_email }}</small>
+                            {% endif %}
+
+                            {% if not client.contact_name and not client.contact_email %}
+                            <span class="client-empty">
+                                Não informado
+                            </span>
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            <span class="client-status client-status-{{ client.status }}">
                                 {{
                                     {
                                         'draft': 'Rascunho',
@@ -283,28 +160,19 @@
                                         'archived': 'Arquivado'
                                     }[client.status]
                                 }}
-
                             </span>
-
                         </td>
 
-
-                        <!-- META ADS -->
                         <td>
+                            <span class="client-meta client-meta-{{ client.meta_connection_status }}">
 
-                            <span
-                                class="client-meta client-meta-{{ client.meta_connection_status }}"
-                            >
-
-                                <i
-                                    class="bi
+                                <i class="bi
                                     {% if client.meta_connection_status == 'connected' %}
                                         bi-check-circle-fill
                                     {% else %}
                                         bi-link-45deg
-                                    {% endif %}"
-                                ></i>
-
+                                    {% endif %}
+                                "></i>
 
                                 {{
                                     {
@@ -317,54 +185,34 @@
                                 }}
 
                             </span>
-
                         </td>
 
-
-                        <!-- AÇÕES -->
                         <td>
 
                             <div class="client-row-actions">
 
-                                <!-- EDITAR -->
                                 <a
-                                    href="{{ url_for(
-                                        'editar_cliente',
-                                        client_id=client.id
-                                    ) }}"
+                                    href="{{ url_for('editar_cliente', client_id=client.id) }}"
                                     class="client-icon-button"
                                     title="Editar cliente"
                                     aria-label="Editar {{ client.name }}"
                                 >
-
                                     <i class="bi bi-pencil-square"></i>
-
                                 </a>
 
-
-                                <!-- EXCLUIR -->
                                 <form
                                     method="POST"
-                                    action="{{ url_for(
-                                        'excluir_cliente',
-                                        client_id=client.id
-                                    ) }}"
-                                    onsubmit="return confirm(
-                                        'Remover o cliente {{ client.name|e }}? Esta ação não pode ser desfeita.'
-                                    );"
+                                    action="{{ url_for('excluir_cliente', client_id=client.id) }}"
+                                    onsubmit="return confirm('Remover o cliente {{ client.name|e }}? Esta ação não pode ser desfeita.');"
                                 >
-
                                     <button
                                         type="submit"
                                         class="client-icon-button client-delete-button"
                                         title="Remover cliente"
                                         aria-label="Remover {{ client.name }}"
                                     >
-
                                         <i class="bi bi-trash3"></i>
-
                                     </button>
-
                                 </form>
 
                             </div>
@@ -381,24 +229,18 @@
 
         </div>
 
-
         {% else %}
 
-        <!-- ESTADO VAZIO -->
         <div class="clients-empty">
 
             <span class="clients-empty-icon">
-
                 <i class="bi bi-people"></i>
-
             </span>
 
-            <h2>
-                Nenhum cliente cadastrado
-            </h2>
+            <h2>Nenhum cliente cadastrado</h2>
 
             <p>
-                Cadastre o primeiro cliente para organizar as futuras conexões com a Meta Ads.
+                Cadastre o primeiro cliente e defina o gestor responsável.
             </p>
 
             <a
@@ -415,5 +257,4 @@
     </section>
 
 </div>
-
 {% endblock %}

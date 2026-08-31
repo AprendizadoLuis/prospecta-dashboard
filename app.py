@@ -284,15 +284,14 @@ def validate_client_form(data):
     return None
 
 
+@app.route("/clientes")
+@login_required
+
 def list_users_for_assignment():
-    """
-    Retorna os usuários ativos disponíveis para serem vinculados
-    como gestores/responsáveis dos clientes.
-    """
     with get_db_connection() as conn:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT id, name, email, role
+                SELECT id, name, email
                 FROM users
                 WHERE is_active = TRUE
                 ORDER BY name
@@ -304,30 +303,23 @@ def list_users_for_assignment():
             "id": str(row[0]),
             "name": row[1],
             "email": row[2],
-            "role": row[3],
         }
         for row in rows
     ]
 
-
-@app.route("/clientes")
-@login_required
 def clientes():
     try:
         clients = list_clients()
-        users = list_users_for_assignment()
         error = None
     except Exception as exc:
         print(f"ERRO AO LISTAR CLIENTES: {exc}")
         clients = []
-        users = []
         error = "Não foi possível carregar os clientes. Tente novamente."
 
     return render_template(
         "clientes.html",
         active_page="clientes",
         clients=clients,
-        users=users,
         error=error,
         message=request.args.get("message"),
     )
@@ -336,18 +328,8 @@ def clientes():
 @app.route("/clientes/novo", methods=["GET", "POST"])
 @login_required
 def novo_cliente():
-    client = {
-        "status": "draft",
-        "responsible_user_id": None,
-    }
+    client = {"status": "draft"}
     error = None
-
-    try:
-        users = list_users_for_assignment()
-    except Exception as exc:
-        print(f"ERRO AO LISTAR USUÁRIOS PARA CLIENTE: {exc}")
-        users = []
-        error = "Não foi possível carregar os gestores disponíveis."
 
     if request.method == "POST":
         client = get_client_form_data()
@@ -356,24 +338,15 @@ def novo_cliente():
         if not error:
             try:
                 save_client(client)
-                return redirect(
-                    url_for(
-                        "clientes",
-                        message="Cliente criado com sucesso.",
-                    )
-                )
+                return redirect(url_for("clientes", message="Cliente criado com sucesso."))
             except Exception as exc:
                 print(f"ERRO AO CRIAR CLIENTE: {exc}")
-                error = (
-                    "Não foi possível criar o cliente. "
-                    "Verifique os dados e tente novamente."
-                )
+                error = "Não foi possível criar o cliente. Verifique os dados e tente novamente."
 
     return render_template(
         "cliente_form.html",
         active_page="clientes",
         client=client,
-        users=users,
         error=error,
         is_edit=False,
     )
@@ -389,21 +362,9 @@ def editar_cliente(client_id):
         client = None
 
     if not client:
-        return redirect(
-            url_for(
-                "clientes",
-                message="Cliente não encontrado.",
-            )
-        )
+        return redirect(url_for("clientes", message="Cliente não encontrado."))
 
     error = None
-
-    try:
-        users = list_users_for_assignment()
-    except Exception as exc:
-        print(f"ERRO AO LISTAR USUÁRIOS PARA CLIENTE: {exc}")
-        users = []
-        error = "Não foi possível carregar os gestores disponíveis."
 
     if request.method == "POST":
         client = get_client_form_data()
@@ -413,12 +374,7 @@ def editar_cliente(client_id):
         if not error:
             try:
                 save_client(client, client_id)
-                return redirect(
-                    url_for(
-                        "clientes",
-                        message="Cliente atualizado com sucesso.",
-                    )
-                )
+                return redirect(url_for("clientes", message="Cliente atualizado com sucesso."))
             except Exception as exc:
                 print(f"ERRO AO ATUALIZAR CLIENTE: {exc}")
                 error = "Não foi possível atualizar o cliente. Tente novamente."
@@ -427,7 +383,6 @@ def editar_cliente(client_id):
         "cliente_form.html",
         active_page="clientes",
         client=client,
-        users=users,
         error=error,
         is_edit=True,
         meta_connection=get_client_connection(client_id),
@@ -1872,14 +1827,23 @@ def _can_manage_task(task):
     return bool(task)
 
 
-def _list_tasks():
+def _list_tasks(responsible_user_id=None):
+    """
+    Lista tarefas e permite filtrar pelo gestor responsável do cliente.
+
+    O gestor do filtro é definido pelo campo clients.responsible_user_id.
+    A tarefa continua tendo seu próprio assigned_to, que representa
+    quem executa a tarefa.
+    """
     with get_db_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("""
+            query = """
                 SELECT
                     t.id,
                     t.client_id,
                     c.name,
+                    c.responsible_user_id,
+                    responsible.name,
                     t.created_by,
                     t.assigned_to,
                     u.name,
@@ -1894,8 +1858,23 @@ def _list_tasks():
                     t.updated_at
                 FROM tasks t
                 JOIN clients c ON c.id = t.client_id
+                LEFT JOIN users responsible
+                    ON responsible.id = c.responsible_user_id
                 JOIN users u ON u.id = t.assigned_to
+            """
+
+            params = []
+
+            if responsible_user_id:
+                query += """
+                    WHERE c.responsible_user_id = %s
+                """
+                params.append(responsible_user_id)
+
+            query += """
                 ORDER BY
+                    COALESCE(responsible.name, 'Sem gestor'),
+                    c.name,
                     CASE t.status
                         WHEN 'in_progress' THEN 1
                         WHEN 'pending' THEN 2
@@ -1910,7 +1889,9 @@ def _list_tasks():
                     END,
                     t.due_date NULLS LAST,
                     t.created_at DESC
-            """)
+            """
+
+            cur.execute(query, params)
             rows = cur.fetchall()
 
     current_user = _task_current_user_id()
@@ -1921,27 +1902,29 @@ def _list_tasks():
             "id": str(row[0]),
             "client_id": str(row[1]),
             "client_name": row[2],
-            "created_by": str(row[3]),
-            "assigned_to": str(row[4]),
-            "assigned_to_name": row[5],
-            "title": row[6],
-            "description": row[7],
-            "status": row[8],
-            "priority": row[9],
-            "visibility": row[10],
+            "responsible_user_id": str(row[3]) if row[3] else None,
+            "responsible_name": row[4],
+            "created_by": str(row[5]),
+            "assigned_to": str(row[6]),
+            "assigned_to_name": row[7],
+            "title": row[8],
+            "description": row[9],
+            "status": row[10],
+            "priority": row[11],
+            "visibility": row[12],
             "due_date": (
-                row[11].strftime("%Y-%m-%dT%H:%M")
-                if row[11]
+                row[13].strftime("%Y-%m-%dT%H:%M")
+                if row[13]
                 else ""
             ),
             "due_date_br": (
-                row[11].strftime("%d/%m/%Y %H:%M")
-                if row[11]
+                row[13].strftime("%d/%m/%Y %H:%M")
+                if row[13]
                 else "Sem prazo"
             ),
-            "completed_at": row[12],
-            "created_at": row[13],
-            "updated_at": row[14],
+            "completed_at": row[14],
+            "created_at": row[15],
+            "updated_at": row[16],
         }
 
         if (
@@ -1955,6 +1938,30 @@ def _list_tasks():
             tasks.append(task)
 
     return tasks
+
+
+def _group_tasks_by_client(tasks):
+    """
+    Agrupa as tarefas por cliente, mantendo a ordem definida em _list_tasks().
+    Cada grupo representa um projeto/cliente.
+    """
+    groups = {}
+
+    for task in tasks:
+        client_id = task["client_id"]
+
+        if client_id not in groups:
+            groups[client_id] = {
+                "client_id": client_id,
+                "client_name": task["client_name"],
+                "responsible_user_id": task["responsible_user_id"],
+                "responsible_name": task["responsible_name"],
+                "tasks": [],
+            }
+
+        groups[client_id]["tasks"].append(task)
+
+    return list(groups.values())
 
 
 def _get_task_form_data():
@@ -1993,24 +2000,46 @@ def _validate_task_data(data):
 @app.route("/tarefas")
 @login_required
 def tarefas():
+    """
+    Tela principal de tarefas.
+
+    Filtro:
+      /tarefas?gestor=<UUID>
+
+    Sem filtro, mostra todos os gestores/clientes.
+    Com filtro, mostra apenas os clientes vinculados ao gestor.
+    """
+    selected_gestor = request.args.get("gestor", "").strip() or None
+
     try:
-        tasks = _list_tasks()
+        tasks = _list_tasks(selected_gestor)
         clients = list_clients()
         users = _get_active_users()
+
+        # Apenas usuários que podem ser gestores aparecem no filtro.
+        gestores = users
+
+        task_groups = _group_tasks_by_client(tasks)
+
         error = None
     except Exception as exc:
         print(f"ERRO AO LISTAR TAREFAS: {exc}")
         tasks = []
+        task_groups = []
         clients = []
         users = []
+        gestores = []
         error = "Não foi possível carregar as tarefas. Tente novamente."
 
     return render_template(
         "tasks.html",
         active_page="tarefas",
         tasks=tasks,
+        task_groups=task_groups,
         clients=clients,
         users=users,
+        gestores=gestores,
+        selected_gestor=selected_gestor,
         error=error,
         message=request.args.get("message"),
     )

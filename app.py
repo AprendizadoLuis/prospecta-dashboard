@@ -282,31 +282,8 @@ def validate_client_form(data):
         return "Informe um e-mail de contato válido."
 
     return None
-
-
 @app.route("/clientes")
 @login_required
-
-def list_users_for_assignment():
-    with get_db_connection() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT id, name, email
-                FROM users
-                WHERE is_active = TRUE
-                ORDER BY name
-            """)
-            rows = cur.fetchall()
-
-    return [
-        {
-            "id": str(row[0]),
-            "name": row[1],
-            "email": row[2],
-        }
-        for row in rows
-    ]
-
 def clientes():
     try:
         clients = list_clients()
@@ -323,8 +300,7 @@ def clientes():
         error=error,
         message=request.args.get("message"),
     )
-
-
+    
 @app.route("/clientes/novo", methods=["GET", "POST"])
 @login_required
 def novo_cliente():
@@ -2049,10 +2025,6 @@ def tarefas():
 @login_required
 def criar_tarefa():
     data = _get_task_form_data()
-
-    data = _get_task_form_data()
-
-    error = _validate_task_data(data)
 
     error = _validate_task_data(data)
 

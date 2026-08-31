@@ -296,16 +296,12 @@ def clientes():
         error = "Não foi possível carregar os clientes. Tente novamente."
 
     return render_template(
-    "cliente_form.html",
-    active_page="clientes",
-    client=client,
-    error=error,
-    is_edit=True,
-    users=list_users_for_assignment(),
-    meta_connection=get_client_connection(client_id),
-    meta_message=request.args.get("meta_message"),
-    meta_error=request.args.get("meta_error"),
-)
+        "clientes.html",
+        active_page="clientes",
+        clients=clients,
+        error=error,
+        message=request.args.get("message"),
+    )
 
 
 @app.route("/clientes/novo", methods=["GET", "POST"])

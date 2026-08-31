@@ -13,3 +13,4 @@ tokens/
 
 # Node
 node_modules/
+.vercel

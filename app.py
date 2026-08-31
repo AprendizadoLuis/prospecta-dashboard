@@ -325,7 +325,7 @@ def novo_cliente():
     client=client,
     error=error,
     is_edit=False,
-    gestores=list_users(),
+    gestores=list_users_for_assignment(),
 )
 
 
@@ -362,7 +362,7 @@ def editar_cliente(client_id):
     client=client,
     error=error,
     is_edit=True,
-    gestores=list_users(),
+    gestores=list_users_for_assignment(),
     meta_connection=get_client_connection(client_id),
     meta_message=request.args.get("meta_message"),
     meta_error=request.args.get("meta_error"),

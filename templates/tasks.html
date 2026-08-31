@@ -1,0 +1,773 @@
+{% extends "base.html" %}
+
+{% block title %}Tarefas | Prospecte OS{% endblock %}
+
+{% block page_styles %}
+<link
+    rel="stylesheet"
+    href="{{ url_for('static', filename='css/tasks.css') }}"
+>
+{% endblock %}
+
+{% block content %}
+
+<div class="tasks-page">
+
+    <!-- CABEÇALHO -->
+    <div class="tasks-header">
+
+        <div>
+            <span class="page-eyebrow">GESTÃO</span>
+
+            <h1>Tarefas</h1>
+
+            <p>
+                Organize e acompanhe as atividades da equipe e dos clientes.
+            </p>
+        </div>
+
+        {% if session.get("user_role") in ["admin", "gestor"] %}
+        <button
+            type="button"
+            class="btn btn-primary tasks-new-button"
+            data-bs-toggle="modal"
+            data-bs-target="#newTaskModal"
+        >
+            <i class="bi bi-plus-lg"></i>
+            Nova tarefa
+        </button>
+        {% endif %}
+
+    </div>
+
+
+    <!-- RESUMO -->
+    <div class="tasks-summary">
+
+        <div class="task-summary-card">
+
+            <div class="task-summary-icon">
+                <i class="bi bi-list-task"></i>
+            </div>
+
+            <div>
+                <span>Total</span>
+                <strong>{{ tasks|length }}</strong>
+            </div>
+
+        </div>
+
+
+        <div class="task-summary-card">
+
+            <div class="task-summary-icon">
+                <i class="bi bi-hourglass-split"></i>
+            </div>
+
+            <div>
+                <span>Pendentes</span>
+
+                <strong>
+                    {{ tasks|selectattr("status", "equalto", "pending")|list|length }}
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="task-summary-card">
+
+            <div class="task-summary-icon">
+                <i class="bi bi-arrow-repeat"></i>
+            </div>
+
+            <div>
+                <span>Em andamento</span>
+
+                <strong>
+                    {{ tasks|selectattr("status", "equalto", "in_progress")|list|length }}
+                </strong>
+            </div>
+
+        </div>
+
+
+        <div class="task-summary-card">
+
+            <div class="task-summary-icon">
+                <i class="bi bi-check-circle"></i>
+            </div>
+
+            <div>
+                <span>Concluídas</span>
+
+                <strong>
+                    {{ tasks|selectattr("status", "equalto", "completed")|list|length }}
+                </strong>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- FILTROS -->
+    <div class="tasks-filters">
+
+        <div class="tasks-filter-group">
+
+            <label for="taskClientFilter">
+                Cliente
+            </label>
+
+            <select
+                id="taskClientFilter"
+                class="form-select"
+            >
+                <option value="">Todos os clientes</option>
+
+                {% for client in clients %}
+                    <option value="{{ client.id }}">
+                        {{ client.name }}
+                    </option>
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+
+        <div class="tasks-filter-group">
+
+            <label for="taskStatusFilter">
+                Status
+            </label>
+
+            <select
+                id="taskStatusFilter"
+                class="form-select"
+            >
+                <option value="">Todos</option>
+                <option value="pending">Pendente</option>
+                <option value="in_progress">Em andamento</option>
+                <option value="completed">Concluída</option>
+                <option value="cancelled">Cancelada</option>
+            </select>
+
+        </div>
+
+
+        <div class="tasks-filter-group">
+
+            <label for="taskPriorityFilter">
+                Prioridade
+            </label>
+
+            <select
+                id="taskPriorityFilter"
+                class="form-select"
+            >
+                <option value="">Todas</option>
+                <option value="urgent">Urgente</option>
+                <option value="high">Alta</option>
+                <option value="medium">Média</option>
+                <option value="low">Baixa</option>
+            </select>
+
+        </div>
+
+
+        {% if session.get("user_role") == "admin" %}
+
+        <div class="tasks-filter-group">
+
+            <label for="taskUserFilter">
+                Responsável
+            </label>
+
+            <select
+                id="taskUserFilter"
+                class="form-select"
+            >
+                <option value="">Todos</option>
+
+                {% for user in users %}
+                    <option value="{{ user.id }}">
+                        {{ user.name }}
+                    </option>
+                {% endfor %}
+
+            </select>
+
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- LISTA -->
+    <div class="tasks-list">
+
+        {% if tasks %}
+
+            {% for task in tasks %}
+
+            <article
+                class="task-card"
+                data-client-id="{{ task.client_id }}"
+                data-status="{{ task.status }}"
+                data-priority="{{ task.priority }}"
+                data-assigned-to="{{ task.assigned_to }}"
+            >
+
+                <div class="task-main">
+
+                    <div class="task-check">
+
+                        {% if task.status == "completed" %}
+
+                            <span class="task-completed-icon">
+                                <i class="bi bi-check-circle-fill"></i>
+                            </span>
+
+                        {% else %}
+
+                            <span class="task-pending-icon">
+                                <i class="bi bi-circle"></i>
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div class="task-content">
+
+                        <div class="task-title-row">
+
+                            <h3>
+                                {{ task.title }}
+                            </h3>
+
+                            {% if task.visibility == "private" %}
+                                <span
+                                    class="task-private-badge"
+                                    title="Tarefa privada"
+                                >
+                                    <i class="bi bi-lock-fill"></i>
+                                </span>
+                            {% endif %}
+
+                        </div>
+
+
+                        {% if task.description %}
+
+                            <p class="task-description">
+                                {{ task.description }}
+                            </p>
+
+                        {% endif %}
+
+
+                        <div class="task-meta">
+
+                            <span>
+                                <i class="bi bi-building"></i>
+
+                                {{ task.client_name }}
+                            </span>
+
+                            <span>
+                                <i class="bi bi-person"></i>
+
+                                {{ task.assigned_to_name }}
+                            </span>
+
+                            {% if task.due_date %}
+
+                                <span>
+                                    <i class="bi bi-calendar3"></i>
+
+                                    {{ task.due_date }}
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="task-side">
+
+                    <span
+                        class="task-priority task-priority-{{ task.priority }}"
+                    >
+                        {% if task.priority == "urgent" %}
+                            Urgente
+                        {% elif task.priority == "high" %}
+                            Alta
+                        {% elif task.priority == "medium" %}
+                            Média
+                        {% else %}
+                            Baixa
+                        {% endif %}
+                    </span>
+
+
+                    <span
+                        class="task-status task-status-{{ task.status }}"
+                    >
+                        {% if task.status == "pending" %}
+                            Pendente
+                        {% elif task.status == "in_progress" %}
+                            Em andamento
+                        {% elif task.status == "completed" %}
+                            Concluída
+                        {% else %}
+                            Cancelada
+                        {% endif %}
+                    </span>
+
+
+                    <div class="task-actions">
+
+                        <a
+                            href="{{ url_for('editar_tarefa', task_id=task.id) }}"
+                            class="btn btn-sm btn-light"
+                            title="Editar tarefa"
+                        >
+                            <i class="bi bi-pencil"></i>
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+            {% endfor %}
+
+        {% else %}
+
+            <div class="tasks-empty">
+
+                <div class="tasks-empty-icon">
+                    <i class="bi bi-check2-square"></i>
+                </div>
+
+                <h3>Nenhuma tarefa encontrada</h3>
+
+                <p>
+                    Crie sua primeira tarefa para começar a organizar a operação.
+                </p>
+
+                {% if session.get("user_role") in ["admin", "gestor"] %}
+
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    data-bs-toggle="modal"
+                    data-bs-target="#newTaskModal"
+                >
+                    <i class="bi bi-plus-lg"></i>
+                    Criar primeira tarefa
+                </button>
+
+                {% endif %}
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     MODAL: NOVA TAREFA
+     ============================================================ -->
+
+<div
+    class="modal fade"
+    id="newTaskModal"
+    tabindex="-1"
+    aria-labelledby="newTaskModalLabel"
+    aria-hidden="true"
+>
+
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+
+        <div class="modal-content">
+
+            <form
+                method="POST"
+                action="{{ url_for('criar_tarefa') }}"
+            >
+
+                <div class="modal-header">
+
+                    <div>
+                        <span class="page-eyebrow">
+                            NOVA ATIVIDADE
+                        </span>
+
+                        <h2
+                            class="modal-title"
+                            id="newTaskModalLabel"
+                        >
+                            Criar tarefa
+                        </h2>
+                    </div>
+
+                    <button
+                        type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Fechar"
+                    ></button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="row g-3">
+
+                        <!-- TÍTULO -->
+
+                        <div class="col-12">
+
+                            <label
+                                for="taskTitle"
+                                class="form-label"
+                            >
+                                Título *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="taskTitle"
+                                name="title"
+                                class="form-control"
+                                placeholder="Ex.: Criar campanha para cliente"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- CLIENTE -->
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="taskClient"
+                                class="form-label"
+                            >
+                                Cliente *
+                            </label>
+
+                            <select
+                                id="taskClient"
+                                name="client_id"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="">
+                                    Selecione o cliente
+                                </option>
+
+                                {% for client in clients %}
+
+                                    <option value="{{ client.id }}">
+                                        {{ client.name }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- RESPONSÁVEL -->
+
+                        <div class="col-md-6">
+
+                            <label
+                                for="taskAssignedTo"
+                                class="form-label"
+                            >
+                                Responsável *
+                            </label>
+
+                            <select
+                                id="taskAssignedTo"
+                                name="assigned_to"
+                                class="form-select"
+                                required
+                            >
+
+                                <option value="">
+                                    Selecione o responsável
+                                </option>
+
+                                {% for user in users %}
+
+                                    <option value="{{ user.id }}">
+                                        {{ user.name }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- PRAZO -->
+
+                        <div class="col-md-4">
+
+                            <label
+                                for="taskDueDate"
+                                class="form-label"
+                            >
+                                Prazo
+                            </label>
+
+                            <input
+                                type="datetime-local"
+                                id="taskDueDate"
+                                name="due_date"
+                                class="form-control"
+                            >
+
+                        </div>
+
+
+                        <!-- PRIORIDADE -->
+
+                        <div class="col-md-4">
+
+                            <label
+                                for="taskPriority"
+                                class="form-label"
+                            >
+                                Prioridade
+                            </label>
+
+                            <select
+                                id="taskPriority"
+                                name="priority"
+                                class="form-select"
+                            >
+
+                                <option value="low">
+                                    Baixa
+                                </option>
+
+                                <option
+                                    value="medium"
+                                    selected
+                                >
+                                    Média
+                                </option>
+
+                                <option value="high">
+                                    Alta
+                                </option>
+
+                                <option value="urgent">
+                                    Urgente
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- VISIBILIDADE -->
+
+                        <div class="col-md-4">
+
+                            <label
+                                for="taskVisibility"
+                                class="form-label"
+                            >
+                                Visibilidade
+                            </label>
+
+                            <select
+                                id="taskVisibility"
+                                name="visibility"
+                                class="form-select"
+                            >
+
+                                <option value="public">
+                                    Pública
+                                </option>
+
+                                <option value="private">
+                                    Privada
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- DESCRIÇÃO -->
+
+                        <div class="col-12">
+
+                            <label
+                                for="taskDescription"
+                                class="form-label"
+                            >
+                                Descrição
+                            </label>
+
+                            <textarea
+                                id="taskDescription"
+                                name="description"
+                                class="form-control"
+                                rows="5"
+                                placeholder="Descreva o que precisa ser feito..."
+                            ></textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-light"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancelar
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                    >
+                        <i class="bi bi-check-lg"></i>
+                        Criar tarefa
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block page_scripts %}
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const clientFilter =
+        document.getElementById("taskClientFilter");
+
+    const statusFilter =
+        document.getElementById("taskStatusFilter");
+
+    const priorityFilter =
+        document.getElementById("taskPriorityFilter");
+
+    const userFilter =
+        document.getElementById("taskUserFilter");
+
+    const cards =
+        document.querySelectorAll(".task-card");
+
+
+    function filterTasks() {
+
+        const client =
+            clientFilter ? clientFilter.value : "";
+
+        const status =
+            statusFilter ? statusFilter.value : "";
+
+        const priority =
+            priorityFilter ? priorityFilter.value : "";
+
+        const user =
+            userFilter ? userFilter.value : "";
+
+
+        cards.forEach(function (card) {
+
+            const matchesClient =
+                !client ||
+                card.dataset.clientId === client;
+
+            const matchesStatus =
+                !status ||
+                card.dataset.status === status;
+
+            const matchesPriority =
+                !priority ||
+                card.dataset.priority === priority;
+
+            const matchesUser =
+                !user ||
+                card.dataset.assignedTo === user;
+
+
+            card.style.display =
+                matchesClient &&
+                matchesStatus &&
+                matchesPriority &&
+                matchesUser
+                    ? ""
+                    : "none";
+
+        });
+
+    }
+
+
+    [
+        clientFilter,
+        statusFilter,
+        priorityFilter,
+        userFilter
+    ].forEach(function (filter) {
+
+        if (filter) {
+            filter.addEventListener(
+                "change",
+                filterTasks
+            );
+        }
+
+    });
+
+});
+
+</script>
+
+{% endblock %}

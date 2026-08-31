@@ -1,25 +1,48 @@
 <aside id="mainSidebar" class="sidebar">
     <div class="sidebar-header">
         <a href="{{ url_for('home') }}" class="brand" aria-label="Prospecte OS - Início">
-            <img class="brand-full" src="{{ url_for('static', filename='css/(Prospecte) Logo Branca (1).png') }}" alt="Prospecte OS">
-            <img class="brand-mark" src="{{ url_for('static', filename='css/776497226_18110382185469531_4503861412306176123_n.jpg') }}" alt="" aria-hidden="true">
+
+            <img class="brand-full" src="{{ url_for('static', filename='css/prospecte-logo.png') }}" alt="Prospecte OS">
+
+
+
+            <img class="brand-mark"
+                src="{{ url_for('static', filename='css/776497226_18110382185469531_4503861412306176123_n.jpg') }}"
+                alt="" aria-hidden="true">
         </a>
-        <button id="sidebarToggle" type="button" class="sidebar-toggle" title="Recolher menu" aria-label="Recolher menu">
+        <button id="sidebarToggle" type="button" class="sidebar-toggle" title="Recolher menu"
+            aria-label="Recolher menu">
             <i class="bi bi-list"></i>
         </button>
     </div>
 
     <nav class="menu" aria-label="Navegação principal">
-        <a href="{{ url_for('home') }}" class="nav-link menu-item {% if active_page == 'overview' %}active{% endif %}" title="Overview" data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-grid-1x2-fill menu-icon"></i><span class="menu-text">Overview</span></a>
-        <a href="{{ url_for('clientes') }}" class="nav-link menu-item {% if active_page == 'clientes' %}active{% endif %}" title="Clientes" data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-people-fill menu-icon"></i><span class="menu-text">Clientes</span></a>
-        <a href="#" class="nav-link menu-item" title="Campanhas" data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-bullseye menu-icon"></i><span class="menu-text">Campanhas</span></a>
-        <a href="#" class="nav-link menu-item" title="Anúncios" data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-megaphone-fill menu-icon"></i><span class="menu-text">Anúncios</span></a>
-        <a href="#" class="nav-link menu-item" title="Relatórios" data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-bar-chart-fill menu-icon"></i><span class="menu-text">Relatórios</span></a>
-        <a href="#" class="nav-link menu-item" title="Alertas" data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-bell-fill menu-icon"></i><span class="menu-text">Alertas</span></a>
-        <a href="{{ url_for('agenda') }}" class="nav-link menu-item {% if active_page == 'agenda' %}active{% endif %}" title="Agenda" data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-calendar3 menu-icon"></i><span class="menu-text">Agenda</span></a>
-        <a href="#" class="nav-link menu-item" title="Metas" data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-check2-circle menu-icon"></i><span class="menu-text">Metas</span></a>
-        <a href="#" class="nav-link menu-item" title="Configurações" data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-gear-fill menu-icon"></i><span class="menu-text">Configurações</span></a>
-        <a href="{{ url_for('perfil') }}" class="nav-link menu-item {% if active_page == 'perfil' %}active{% endif %}" title="Meu Perfil" data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-person-circle menu-icon"></i><span class="menu-text">Meu Perfil</span></a>
+        <a href="{{ url_for('home') }}" class="nav-link menu-item {% if active_page == 'overview' %}active{% endif %}"
+            title="Overview" data-bs-toggle="tooltip" data-bs-placement="right"><i
+                class="bi bi-grid-1x2-fill menu-icon"></i><span class="menu-text">Overview</span></a>
+        <a href="{{ url_for('clientes') }}"
+            class="nav-link menu-item {% if active_page == 'clientes' %}active{% endif %}" title="Clientes"
+            data-bs-toggle="tooltip" data-bs-placement="right"><i class="bi bi-people-fill menu-icon"></i><span
+                class="menu-text">Clientes</span></a>
+        <a href="#" class="nav-link menu-item" title="Campanhas" data-bs-toggle="tooltip" data-bs-placement="right"><i
+                class="bi bi-bullseye menu-icon"></i><span class="menu-text">Campanhas</span></a>
+        <a href="#" class="nav-link menu-item" title="Anúncios" data-bs-toggle="tooltip" data-bs-placement="right"><i
+                class="bi bi-megaphone-fill menu-icon"></i><span class="menu-text">Anúncios</span></a>
+        <a href="#" class="nav-link menu-item" title="Relatórios" data-bs-toggle="tooltip" data-bs-placement="right"><i
+                class="bi bi-bar-chart-fill menu-icon"></i><span class="menu-text">Relatórios</span></a>
+        <a href="#" class="nav-link menu-item" title="Alertas" data-bs-toggle="tooltip" data-bs-placement="right"><i
+                class="bi bi-bell-fill menu-icon"></i><span class="menu-text">Alertas</span></a>
+        <a href="{{ url_for('agenda') }}" class="nav-link menu-item {% if active_page == 'agenda' %}active{% endif %}"
+            title="Agenda" data-bs-toggle="tooltip" data-bs-placement="right"><i
+                class="bi bi-calendar3 menu-icon"></i><span class="menu-text">Agenda</span></a>
+        <a href="#" class="nav-link menu-item" title="Metas" data-bs-toggle="tooltip" data-bs-placement="right"><i
+                class="bi bi-check2-circle menu-icon"></i><span class="menu-text">Metas</span></a>
+        <a href="#" class="nav-link menu-item" title="Configurações" data-bs-toggle="tooltip"
+            data-bs-placement="right"><i class="bi bi-gear-fill menu-icon"></i><span
+                class="menu-text">Configurações</span></a>
+        <a href="{{ url_for('perfil') }}" class="nav-link menu-item {% if active_page == 'perfil' %}active{% endif %}"
+            title="Meu Perfil" data-bs-toggle="tooltip" data-bs-placement="right"><i
+                class="bi bi-person-circle menu-icon"></i><span class="menu-text">Meu Perfil</span></a>
     </nav>
 
     <div class="sidebar-footer">

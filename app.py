@@ -17,7 +17,7 @@ from flask import (
 )
 
 from services.agenda_service import get_dashboard_data
-from services.auth_service import authenticate_user
+from services.auth_service import authenticate_user, get_db_connection
 from services.client_service import (
     CLIENT_STATUSES,
     delete_client,
@@ -1665,6 +1665,556 @@ def agenda():
             "user_email"
         )
     )
+
+
+
+# ============================================================
+# TAREFAS
+# ============================================================
+
+def _task_current_user_id():
+    return str(session.get("user_id")) if session.get("user_id") else None
+
+
+def _task_is_admin():
+    return session.get("user_role") == "admin"
+
+
+def _task_is_gestor():
+    return session.get("user_role") in {"user", "gestor"}
+
+
+def _parse_task_due_date(value):
+    if not value:
+        return None
+
+    try:
+        return datetime.fromisoformat(value)
+    except (ValueError, TypeError):
+        return None
+
+
+def _get_active_users():
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id, name, email, role
+                FROM users
+                WHERE is_active = TRUE
+                ORDER BY name
+            """)
+            rows = cur.fetchall()
+
+    return [
+        {
+            "id": str(row[0]),
+            "name": row[1],
+            "email": row[2],
+            "role": row[3],
+        }
+        for row in rows
+    ]
+
+
+def _get_task(task_id):
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT
+                    t.id,
+                    t.client_id,
+                    c.name,
+                    t.created_by,
+                    creator.name,
+                    t.assigned_to,
+                    assignee.name,
+                    t.title,
+                    t.description,
+                    t.status,
+                    t.priority,
+                    t.visibility,
+                    t.due_date,
+                    t.completed_at,
+                    t.created_at,
+                    t.updated_at
+                FROM tasks t
+                JOIN clients c ON c.id = t.client_id
+                JOIN users creator ON creator.id = t.created_by
+                JOIN users assignee ON assignee.id = t.assigned_to
+                WHERE t.id = %s
+            """, (task_id,))
+            row = cur.fetchone()
+
+    if not row:
+        return None
+
+    return {
+        "id": str(row[0]),
+        "client_id": str(row[1]),
+        "client_name": row[2],
+        "created_by": str(row[3]),
+        "created_by_name": row[4],
+        "assigned_to": str(row[5]),
+        "assigned_to_name": row[6],
+        "title": row[7],
+        "description": row[8],
+        "status": row[9],
+        "priority": row[10],
+        "visibility": row[11],
+        "due_date": row[12],
+        "completed_at": row[13],
+        "created_at": row[14],
+        "updated_at": row[15],
+    }
+
+
+def _can_view_task(task):
+    if not task:
+        return False
+
+    if _task_is_admin():
+        return True
+
+    current_user = _task_current_user_id()
+
+    return (
+        task["visibility"] == "public"
+        or current_user in {
+            task["created_by"],
+            task["assigned_to"],
+        }
+    )
+
+
+def _can_manage_task(task):
+    if not task:
+        return False
+
+    if _task_is_admin():
+        return True
+
+    return (
+        _task_is_gestor()
+        and task["assigned_to"] == _task_current_user_id()
+    )
+
+
+def _list_tasks():
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT
+                    t.id,
+                    t.client_id,
+                    c.name,
+                    t.created_by,
+                    t.assigned_to,
+                    u.name,
+                    t.title,
+                    t.description,
+                    t.status,
+                    t.priority,
+                    t.visibility,
+                    t.due_date,
+                    t.completed_at,
+                    t.created_at,
+                    t.updated_at
+                FROM tasks t
+                JOIN clients c ON c.id = t.client_id
+                JOIN users u ON u.id = t.assigned_to
+                ORDER BY
+                    CASE t.status
+                        WHEN 'in_progress' THEN 1
+                        WHEN 'pending' THEN 2
+                        WHEN 'completed' THEN 3
+                        ELSE 4
+                    END,
+                    CASE t.priority
+                        WHEN 'urgent' THEN 1
+                        WHEN 'high' THEN 2
+                        WHEN 'medium' THEN 3
+                        ELSE 4
+                    END,
+                    t.due_date NULLS LAST,
+                    t.created_at DESC
+            """)
+            rows = cur.fetchall()
+
+    current_user = _task_current_user_id()
+    tasks = []
+
+    for row in rows:
+        task = {
+            "id": str(row[0]),
+            "client_id": str(row[1]),
+            "client_name": row[2],
+            "created_by": str(row[3]),
+            "assigned_to": str(row[4]),
+            "assigned_to_name": row[5],
+            "title": row[6],
+            "description": row[7],
+            "status": row[8],
+            "priority": row[9],
+            "visibility": row[10],
+            "due_date": (
+                row[11].strftime("%Y-%m-%dT%H:%M")
+                if row[11]
+                else ""
+            ),
+            "due_date_br": (
+                row[11].strftime("%d/%m/%Y %H:%M")
+                if row[11]
+                else "Sem prazo"
+            ),
+            "completed_at": row[12],
+            "created_at": row[13],
+            "updated_at": row[14],
+        }
+
+        if (
+            _task_is_admin()
+            or task["visibility"] == "public"
+            or current_user in {
+                task["created_by"],
+                task["assigned_to"],
+            }
+        ):
+            tasks.append(task)
+
+    return tasks
+
+
+def _get_task_form_data():
+    return {
+        "title": request.form.get("title", "").strip(),
+        "description": request.form.get("description", "").strip() or None,
+        "client_id": request.form.get("client_id", "").strip(),
+        "assigned_to": request.form.get("assigned_to", "").strip(),
+        "priority": request.form.get("priority", "medium"),
+        "visibility": request.form.get("visibility", "public"),
+        "due_date": _parse_task_due_date(
+            request.form.get("due_date", "").strip()
+        ),
+    }
+
+
+def _validate_task_data(data):
+    if not data["title"]:
+        return "Informe o título da tarefa."
+
+    if not data["client_id"]:
+        return "Selecione um cliente."
+
+    if not data["assigned_to"]:
+        return "Selecione um responsável."
+
+    if data["priority"] not in {"low", "medium", "high", "urgent"}:
+        return "Prioridade inválida."
+
+    if data["visibility"] not in {"public", "private"}:
+        return "Visibilidade inválida."
+
+    return None
+
+
+@app.route("/tarefas")
+@login_required
+def tarefas():
+    try:
+        tasks = _list_tasks()
+        clients = list_clients()
+        users = _get_active_users()
+        error = None
+    except Exception as exc:
+        print(f"ERRO AO LISTAR TAREFAS: {exc}")
+        tasks = []
+        clients = []
+        users = []
+        error = "Não foi possível carregar as tarefas. Tente novamente."
+
+    return render_template(
+        "tasks.html",
+        active_page="tarefas",
+        tasks=tasks,
+        clients=clients,
+        users=users,
+        error=error,
+        message=request.args.get("message"),
+    )
+
+
+@app.route("/tarefas/criar", methods=["POST"])
+@login_required
+def criar_tarefa():
+    data = _get_task_form_data()
+
+    # Usuário comum/gestor cria a tarefa para si.
+    if not _task_is_admin():
+        data["assigned_to"] = _task_current_user_id()
+
+    error = _validate_task_data(data)
+
+    if error:
+        return redirect(url_for("tarefas", message=error))
+
+    if not get_client(data["client_id"]):
+        return redirect(
+            url_for("tarefas", message="Cliente não encontrado.")
+        )
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT id
+                FROM users
+                WHERE id = %s
+                  AND is_active = TRUE
+                LIMIT 1
+            """, (data["assigned_to"],))
+
+            if not cur.fetchone():
+                return redirect(
+                    url_for("tarefas", message="Responsável inválido.")
+                )
+
+            cur.execute("""
+                INSERT INTO tasks (
+                    client_id,
+                    created_by,
+                    assigned_to,
+                    title,
+                    description,
+                    status,
+                    priority,
+                    visibility,
+                    due_date
+                )
+                VALUES (
+                    %s, %s, %s, %s, %s,
+                    'pending', %s, %s, %s
+                )
+            """, (
+                data["client_id"],
+                _task_current_user_id(),
+                data["assigned_to"],
+                data["title"],
+                data["description"],
+                data["priority"],
+                data["visibility"],
+                data["due_date"],
+            ))
+
+        conn.commit()
+
+    return redirect(
+        url_for("tarefas", message="Tarefa criada com sucesso.")
+    )
+
+
+@app.route("/tarefas/<uuid:task_id>/editar", methods=["GET", "POST"])
+@login_required
+def editar_tarefa(task_id):
+    task = _get_task(task_id)
+
+    if not task:
+        return redirect(
+            url_for("tarefas", message="Tarefa não encontrada.")
+        )
+
+    if not _can_view_task(task):
+        return redirect(
+            url_for(
+                "tarefas",
+                message="Você não tem acesso a esta tarefa."
+            )
+        )
+
+    if not _can_manage_task(task):
+        return redirect(
+            url_for(
+                "tarefas",
+                message="Você não tem permissão para editar esta tarefa."
+            )
+        )
+
+    clients = list_clients()
+    users = _get_active_users()
+    error = None
+
+    if request.method == "POST":
+        data = _get_task_form_data()
+
+        if not _task_is_admin():
+            data["assigned_to"] = task["assigned_to"]
+
+        error = _validate_task_data(data)
+
+        if not error:
+            with get_db_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        UPDATE tasks
+                        SET
+                            client_id = %s,
+                            assigned_to = %s,
+                            title = %s,
+                            description = %s,
+                            priority = %s,
+                            visibility = %s,
+                            due_date = %s,
+                            updated_at = now()
+                        WHERE id = %s
+                    """, (
+                        data["client_id"],
+                        data["assigned_to"],
+                        data["title"],
+                        data["description"],
+                        data["priority"],
+                        data["visibility"],
+                        data["due_date"],
+                        task_id,
+                    ))
+
+                conn.commit()
+
+            return redirect(
+                url_for(
+                    "tarefas",
+                    message="Tarefa atualizada com sucesso."
+                )
+            )
+
+    return render_template(
+        "task_form.html",
+        active_page="tarefas",
+        task=task,
+        clients=clients,
+        users=users,
+        error=error,
+        is_edit=True,
+    )
+
+
+@app.route("/tarefas/<uuid:task_id>/status", methods=["POST"])
+@login_required
+def alterar_status_tarefa(task_id):
+    task = _get_task(task_id)
+
+    if not task:
+        return redirect(
+            url_for("tarefas", message="Tarefa não encontrada.")
+        )
+
+    if not _can_manage_task(task):
+        return redirect(
+            url_for(
+                "tarefas",
+                message="Você não tem permissão para alterar esta tarefa."
+            )
+        )
+
+    status = request.form.get("status", "").strip()
+
+    if status not in {"pending", "in_progress", "completed"}:
+        return redirect(
+            url_for("tarefas", message="Status de tarefa inválido.")
+        )
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            if status == "completed":
+                cur.execute("""
+                    UPDATE tasks
+                    SET
+                        status = 'completed',
+                        completed_at = now(),
+                        updated_at = now()
+                    WHERE id = %s
+                """, (task_id,))
+            else:
+                cur.execute("""
+                    UPDATE tasks
+                    SET
+                        status = %s,
+                        completed_at = NULL,
+                        updated_at = now()
+                    WHERE id = %s
+                """, (status, task_id))
+
+        conn.commit()
+
+    return redirect(
+        url_for("tarefas", message="Status atualizado com sucesso.")
+    )
+
+
+@app.route("/tarefas/<uuid:task_id>/concluir", methods=["POST"])
+@login_required
+def concluir_tarefa(task_id):
+    task = _get_task(task_id)
+
+    if not task:
+        return redirect(
+            url_for("tarefas", message="Tarefa não encontrada.")
+        )
+
+    if not _can_manage_task(task):
+        return redirect(
+            url_for(
+                "tarefas",
+                message="Você não tem permissão para concluir esta tarefa."
+            )
+        )
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE tasks
+                SET
+                    status = 'completed',
+                    completed_at = now(),
+                    updated_at = now()
+                WHERE id = %s
+            """, (task_id,))
+
+        conn.commit()
+
+    return redirect(
+        url_for("tarefas", message="Tarefa concluída com sucesso.")
+    )
+
+
+@app.route("/tarefas/<uuid:task_id>/excluir", methods=["POST"])
+@login_required
+def excluir_tarefa(task_id):
+    task = _get_task(task_id)
+
+    if not task:
+        return redirect(
+            url_for("tarefas", message="Tarefa não encontrada.")
+        )
+
+    if not _can_manage_task(task):
+        return redirect(
+            url_for(
+                "tarefas",
+                message="Você não tem permissão para excluir esta tarefa."
+            )
+        )
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM tasks WHERE id = %s",
+                (task_id,)
+            )
+
+        conn.commit()
+
+    return redirect(
+        url_for("tarefas", message="Tarefa excluída com sucesso.")
+    )
+
 
 
 # ============================================================

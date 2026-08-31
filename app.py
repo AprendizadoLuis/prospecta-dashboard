@@ -1215,6 +1215,7 @@ def home():
 
     try:
         clients = list_clients()
+        gestores = list_users_for_assignment()
     except Exception as exc:
         print(f"ERRO AO LISTAR CLIENTES DO OVERVIEW: {exc}")
 
@@ -1244,7 +1245,8 @@ def home():
             cpm_change=None,
             critical_count=0,
             warning_count=0,
-            healthy_count=0
+            healthy_count=0,
+            gestores=[]
         )
 
     # ========================================================
@@ -1302,6 +1304,17 @@ def home():
                 account["client_name"] = (
                     client.get("name")
                     or "Cliente sem nome"
+                )
+
+                # Gestor responsável pelo cliente
+                account["responsible_user_id"] = client.get("responsible_user_id")
+                account["responsible_user_name"] = next(
+                    (
+                        gestor.get("name")
+                        for gestor in gestores
+                        if str(gestor.get("id")) == str(client.get("responsible_user_id"))
+                    ),
+                    "Sem gestor"
                 )
 
                 connected_accounts.append(
@@ -1559,6 +1572,7 @@ def home():
         "index.html",
         active_page="overview",
         accounts=results,
+        gestores=gestores,
         error=None,
         since=since,
         until=until,

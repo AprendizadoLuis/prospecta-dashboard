@@ -85,12 +85,25 @@
 
                     <tr>
 
+                        <!-- CLIENTE -->
                         <td>
                             <div class="clients-identity">
+
+                                {% if client.avatar_url %}
+
+                                <img
+                                    src="{{ client.avatar_url }}"
+                                    alt="{{ client.name }}"
+                                    class="clients-avatar clients-avatar-image"
+                                >
+
+                                {% else %}
 
                                 <span class="clients-avatar">
                                     {{ client.name[0]|upper }}
                                 </span>
+
+                                {% endif %}
 
                                 <span>
                                     <strong>{{ client.name }}</strong>
@@ -103,9 +116,11 @@
                             </div>
                         </td>
 
+                        <!-- GESTOR -->
                         <td>
 
                             {% if client.responsible_name %}
+
                             <div class="clients-identity">
 
                                 <span class="clients-avatar">
@@ -120,18 +135,22 @@
                             </div>
 
                             {% elif client.responsible_user_id %}
+
                             <span class="client-empty">
                                 Usuário vinculado
                             </span>
 
                             {% else %}
+
                             <span class="client-empty">
                                 Sem gestor
                             </span>
+
                             {% endif %}
 
                         </td>
 
+                        <!-- CONTATO -->
                         <td>
 
                             {% if client.contact_name %}
@@ -143,15 +162,20 @@
                             {% endif %}
 
                             {% if not client.contact_name and not client.contact_email %}
+
                             <span class="client-empty">
                                 Não informado
                             </span>
+
                             {% endif %}
 
                         </td>
 
+                        <!-- STATUS -->
                         <td>
+
                             <span class="client-status client-status-{{ client.status }}">
+
                                 {{
                                     {
                                         'draft': 'Rascunho',
@@ -160,10 +184,14 @@
                                         'archived': 'Arquivado'
                                     }[client.status]
                                 }}
+
                             </span>
+
                         </td>
 
+                        <!-- META ADS -->
                         <td>
+
                             <span class="client-meta client-meta-{{ client.meta_connection_status }}">
 
                                 <i class="bi
@@ -185,8 +213,10 @@
                                 }}
 
                             </span>
+
                         </td>
 
+                        <!-- AÇÕES -->
                         <td>
 
                             <div class="client-row-actions">
@@ -205,6 +235,7 @@
                                     action="{{ url_for('excluir_cliente', client_id=client.id) }}"
                                     onsubmit="return confirm('Remover o cliente {{ client.name|e }}? Esta ação não pode ser desfeita.');"
                                 >
+
                                     <button
                                         type="submit"
                                         class="client-icon-button client-delete-button"
@@ -213,6 +244,7 @@
                                     >
                                         <i class="bi bi-trash3"></i>
                                     </button>
+
                                 </form>
 
                             </div>
@@ -231,6 +263,7 @@
 
         {% else %}
 
+        <!-- ESTADO VAZIO -->
         <div class="clients-empty">
 
             <span class="clients-empty-icon">

@@ -339,34 +339,99 @@ def editar_cliente(client_id):
         client = None
 
     if not client:
-        return redirect(url_for("clientes", message="Cliente não encontrado."))
+        return redirect(
+            url_for(
+                "clientes",
+                message="Cliente não encontrado."
+            )
+        )
 
     error = None
 
     if request.method == "POST":
         client = get_client_form_data()
         client["id"] = str(client_id)
+
         error = validate_client_form(client)
 
         if not error:
             try:
-                save_client(client, client_id)
-                return redirect(url_for("clientes", message="Cliente atualizado com sucesso."))
+                # ====================================================
+                # CAPTURA A FOTO ENVIADA
+                # ====================================================
+
+                avatar_file = request.files.get("avatar")
+
+                print("========== DEBUG FOTO ==========")
+                print(
+                    "CONTENT TYPE:",
+                    request.content_type
+                )
+                print(
+                    "FILES:",
+                    list(request.files.keys())
+                )
+
+                if avatar_file:
+                    print(
+                        "AVATAR:",
+                        avatar_file.filename
+                    )
+                    print(
+                        "AVATAR CONTENT TYPE:",
+                        avatar_file.content_type
+                    )
+                else:
+                    print(
+                        "AVATAR: NÃO RECEBIDO"
+                    )
+
+                print("===============================")
+
+                # ====================================================
+                # SALVA CLIENTE + FOTO
+                # ====================================================
+
+                save_client(
+                    client,
+                    client_id,
+                    avatar_file=avatar_file
+                )
+
+                return redirect(
+                    url_for(
+                        "clientes",
+                        message="Cliente atualizado com sucesso."
+                    )
+                )
+
+            except ValueError as exc:
+                print(
+                    f"ERRO DE VALIDAÇÃO DA FOTO: {exc}"
+                )
+                error = str(exc)
+
             except Exception as exc:
-                print(f"ERRO AO ATUALIZAR CLIENTE: {exc}")
-                error = "Não foi possível atualizar o cliente. Tente novamente."
+                print(
+                    f"ERRO AO ATUALIZAR CLIENTE: {exc}"
+                )
+
+                error = (
+                    "Não foi possível atualizar o cliente. "
+                    "Tente novamente."
+                )
 
     return render_template(
-    "cliente_form.html",
-    active_page="clientes",
-    client=client,
-    error=error,
-    is_edit=True,
-    gestores=list_users_for_assignment(),
-    meta_connection=get_client_connection(client_id),
-    meta_message=request.args.get("meta_message"),
-    meta_error=request.args.get("meta_error"),
-)
+        "cliente_form.html",
+        active_page="clientes",
+        client=client,
+        error=error,
+        is_edit=True,
+        gestores=list_users_for_assignment(),
+        meta_connection=get_client_connection(client_id),
+        meta_message=request.args.get("meta_message"),
+        meta_error=request.args.get("meta_error"),
+    )
 
 
 @app.route("/clientes/<uuid:client_id>/excluir", methods=["POST"])

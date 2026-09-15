@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+
+{% block title %}Relatórios | Prospecte OS{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relatorios.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="reports-page">
+
+    <!-- =====================================================
+         CABEÇALHO
+    ====================================================== -->
+
+    <div class="reports-topbar">
+
+        <div class="reports-title">
+
+            <div class="reports-title-icon">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+            </div>
+
+            <div>
+
+                <h1>Relatórios</h1>
+
+                <p>
+                    Crie e acompanhe relatórios de desempenho dos seus clientes.
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         PAINEL DE CLIENTES
+    ====================================================== -->
+
+    <section class="reports-panel">
+
+        <!-- =================================================
+             CABEÇALHO
+        ================================================== -->
+
+        <div class="reports-panel-header">
+
+            <div class="reports-panel-heading">
+
+                <div>
+
+                    <h2>
+                        Clientes
+                    </h2>
+
+                    <p>
+                        Selecione um cliente para criar um relatório.
+                    </p>
+
+                </div>
+
+                <span id="reportsClientCount" class="reports-client-count">
+                    {{ clients|length }}
+                    cliente{% if clients|length != 1 %}s{% endif %}
+                </span>
+
+            </div>
+
+
+            <!-- =================================================
+                 FILTROS
+            ================================================== -->
+
+            <div class="reports-filters">
+
+                <!-- BUSCA -->
+
+                <div class="reports-search">
+
+                    <i class="bi bi-search"></i>
+
+                    <input type="text" id="clientSearch" placeholder="Buscar cliente..." autocomplete="off">
+
+                </div>
+
+
+                <!-- GESTOR -->
+
+                <div class="reports-filter">
+
+                    <i class="bi bi-person"></i>
+
+                    <select id="managerFilter">
+
+                        <option value="all">
+                            Todos os gestores
+                        </option>
+
+                        {% set managers = [] %}
+
+                        {% for client in clients %}
+
+                        {% if client.responsible_name and client.responsible_name not in managers %}
+
+                        {% set managers = managers.append(client.responsible_name) %}
+
+                        {% endif %}
+
+                        {% endfor %}
+
+                        {% for manager in managers|sort %}
+
+                        <option value="{{ manager|lower }}">
+                            {{ manager }}
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                    <i class="bi bi-chevron-down reports-filter-arrow"></i>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             GRID DE CLIENTES
+        ================================================== -->
+
+        {% if clients %}
+
+        <div class="reports-client-grid" id="reportsClientGrid">
+
+            {% for client in clients %}
+
+            <article class="report-client-card" data-client-name="{{ client.name|lower }}"
+                data-manager="{{ (client.responsible_name or '')|lower }}">
+
+                <!-- =========================================
+                     PARTE SUPERIOR
+                ========================================== -->
+
+                <div class="report-client-top">
+
+                    <div class="report-client-identity">
+
+                        {% if client.avatar_url %}
+
+                        <img src="{{ client.avatar_url }}" alt="{{ client.name }}" class="report-client-avatar"
+                            loading="lazy">
+
+                        {% else %}
+
+                        <div class="report-client-avatar report-client-avatar-fallback">
+                            {{ client.name[0]|upper }}
+                        </div>
+
+                        {% endif %}
+
+
+                        <div class="report-client-info">
+
+                            <h3>
+                                {{ client.name }}
+                            </h3>
+
+                            <span>
+                                {% if client.segment %}
+                                {{ client.segment }}
+                                {% else %}
+                                Cliente
+                                {% endif %}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="report-card-menu">
+
+                        <i class="bi bi-three-dots"></i>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================================
+                     DIVISOR
+                ========================================== -->
+
+                <div class="report-client-divider"></div>
+
+
+                <!-- =========================================
+                     INFORMAÇÕES
+                ========================================== -->
+
+                <div class="report-client-info-grid">
+
+                    <div class="report-info-item">
+
+                        <span class="report-info-label">
+                            Gestor
+                        </span>
+
+                        <div class="report-manager">
+
+                            <span class="report-manager-avatar">
+
+                                {% if client.responsible_name %}
+                                {{ client.responsible_name[0]|upper }}
+                                {% else %}
+                                -
+                                {% endif %}
+
+                            </span>
+
+                            <strong>
+                                {% if client.responsible_name %}
+                                {{ client.responsible_name }}
+                                {% else %}
+                                Não definido
+                                {% endif %}
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="report-info-item">
+
+                        <span class="report-info-label">
+                            Status
+                        </span>
+
+                        {% if client.status == "active" %}
+
+                        <span class="report-status report-status-active">
+                            <span></span>
+                            Ativo
+                        </span>
+
+                        {% elif client.status == "paused" %}
+
+                        <span class="report-status report-status-paused">
+                            <span></span>
+                            Pausado
+                        </span>
+
+                        {% elif client.status == "draft" %}
+
+                        <span class="report-status report-status-draft">
+                            <span></span>
+                            Rascunho
+                        </span>
+
+                        {% else %}
+
+                        <span class="report-status report-status-archived">
+                            <span></span>
+                            Arquivado
+                        </span>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================================
+                     BOTÃO
+                ========================================== -->
+
+                <div class="report-client-footer">
+
+                    <a href="{{ url_for('relatorio_cliente', client_id=client.id) }}" class="report-create-button">
+
+                        <span>
+                            Criar relatório
+                        </span>
+
+                        <i class="bi bi-arrow-right"></i>
+
+                    </a>
+
+                </div>
+
+            </article>
+
+            {% endfor %}
+
+        </div>
+
+
+        <!-- =================================================
+             SEM RESULTADOS
+        ================================================== -->
+
+        <div id="reportsNoResults" class="reports-no-results" style="display: none;">
+
+            <div class="reports-no-results-icon">
+                <i class="bi bi-search"></i>
+            </div>
+
+            <h3>
+                Nenhum cliente encontrado
+            </h3>
+
+            <p>
+                Tente alterar o gestor selecionado ou o nome pesquisado.
+            </p>
+
+        </div>
+
+
+        {% else %}
+
+        <!-- =================================================
+             ESTADO VAZIO
+        ================================================== -->
+
+        <div class="reports-empty">
+
+            <div class="reports-empty-icon">
+                <i class="bi bi-file-earmark-bar-graph"></i>
+            </div>
+
+            <h2>
+                Nenhum cliente cadastrado
+            </h2>
+
+            <p>
+                Cadastre um cliente para começar a criar relatórios.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+
+<!-- =========================================================
+     FILTROS
+========================================================== -->
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const managerFilter = document.getElementById("managerFilter");
+        const clientSearch = document.getElementById("clientSearch");
+        const clientGrid = document.getElementById("reportsClientGrid");
+        const noResults = document.getElementById("reportsNoResults");
+        const countElement = document.getElementById("reportsClientCount");
+
+        if (!managerFilter || !clientGrid) {
+            return;
+        }
+
+
+        const cards = Array.from(
+            clientGrid.querySelectorAll(".report-client-card")
+        );
+
+
+        function updateClients() {
+
+            const selectedManager = managerFilter.value.toLowerCase();
+            const searchTerm = clientSearch
+                ? clientSearch.value.trim().toLowerCase()
+                : "";
+
+
+            let visibleCount = 0;
+
+
+            cards.forEach(function (card) {
+
+                const clientName =
+                    card.dataset.clientName || "";
+
+                const manager =
+                    card.dataset.manager || "";
+
+
+                const matchesManager =
+                    selectedManager === "all" ||
+                    manager === selectedManager;
+
+
+                const matchesSearch =
+                    !searchTerm ||
+                    clientName.includes(searchTerm);
+
+
+                const shouldShow =
+                    matchesManager && matchesSearch;
+
+
+                if (shouldShow) {
+
+                    card.style.display = "";
+
+                    visibleCount++;
+
+                } else {
+
+                    card.style.display = "none";
+
+                }
+
+            });
+
+
+            /* Atualiza contador */
+
+            if (countElement) {
+
+                countElement.textContent =
+                    visibleCount +
+                    (visibleCount === 1
+                        ? " cliente"
+                        : " clientes");
+
+            }
+
+
+            /* Mostra estado sem resultados */
+
+            if (noResults) {
+
+                noResults.style.display =
+                    visibleCount === 0
+                        ? "flex"
+                        : "none";
+
+            }
+
+        }
+
+
+        managerFilter.addEventListener(
+            "change",
+            updateClients
+        );
+
+
+        if (clientSearch) {
+
+            clientSearch.addEventListener(
+                "input",
+                updateClients
+            );
+
+        }
+
+
+        updateClients();
+
+    });
+
+</script>
+
+{% endblock %}

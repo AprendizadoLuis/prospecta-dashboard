@@ -11,5 +11,11 @@
       "src": "/(.*)",
       "dest": "app.py"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/refresh-overview",
+      "schedule": "0 3 * * *"
+    }
   ]
 }

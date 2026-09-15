@@ -1,6 +1,7 @@
 
 import os
 import secrets
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from functools import wraps
@@ -1877,6 +1878,401 @@ def calculate_percentage_change(current, previous):
 
     return ((current - previous) / previous) * 100
 
+# ============================================================
+# CACHE DO OVERVIEW - META ADS
+# ============================================================
+
+CACHE_MINUTES = 60
+
+
+def get_overview_cache(
+    client_id,
+    ad_account_id,
+    since,
+    until
+):
+    """
+    Busca dados do Overview no cache do Supabase.
+
+    Retorna os dados somente quando o cache ainda está válido.
+    """
+
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+
+                cur.execute(
+                    """
+                    SELECT
+                        data,
+                        fetched_at,
+                        expires_at
+                    FROM meta_overview_cache
+                    WHERE client_id = %s
+                      AND ad_account_id = %s
+                      AND since = %s
+                      AND until = %s
+                      AND expires_at > NOW()
+                    LIMIT 1
+                    """,
+                    (
+                        client_id,
+                        ad_account_id,
+                        since,
+                        until
+                    )
+                )
+
+                row = cur.fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "data": row[0],
+            "fetched_at": row[1],
+            "expires_at": row[2]
+        }
+
+    except Exception as exc:
+        print(
+            "ERRO AO LER CACHE DO OVERVIEW: "
+            f"{exc}"
+        )
+
+        return None
+
+
+def save_overview_cache(
+    client_id,
+    ad_account_id,
+    since,
+    until,
+    data
+):
+    """
+    Salva ou atualiza os dados do Overview no cache.
+    """
+
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+
+                cur.execute(
+                    """
+                    INSERT INTO meta_overview_cache (
+                        client_id,
+                        ad_account_id,
+                        since,
+                        until,
+                        data,
+                        fetched_at,
+                        expires_at,
+                        updated_at
+                    )
+                    VALUES (
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        NOW(),
+                        NOW() + INTERVAL '1 hour',
+                        NOW()
+                    )
+                    ON CONFLICT (
+                        client_id,
+                        ad_account_id,
+                        since,
+                        until
+                    )
+                    DO UPDATE SET
+                        data = EXCLUDED.data,
+                        fetched_at = NOW(),
+                        expires_at = NOW() + INTERVAL '1 hour',
+                        updated_at = NOW()
+                    """,
+                    (
+                        client_id,
+                        ad_account_id,
+                        since,
+                        until,
+                        json.dumps(data)
+                    )
+                )
+
+            conn.commit()
+
+        return True
+
+    except Exception as exc:
+        print(
+            "ERRO AO SALVAR CACHE DO OVERVIEW: "
+            f"{exc}"
+        )
+
+        return False
+    
+# ============================================================
+# ATUALIZAÇÃO AUTOMÁTICA DO CACHE DO OVERVIEW
+# ============================================================
+
+def refresh_overview_cache():
+    """
+    Atualiza o cache do Overview para todos os clientes
+    conectados à Meta e com contas selecionadas.
+    """
+
+    default_since, default_until = get_default_dates()
+
+    previous_since, previous_until = get_previous_period(
+        default_since,
+        default_until
+    )
+
+    clients = list_clients()
+
+    refreshed = 0
+    errors = 0
+
+    connected_accounts = []
+
+    # ========================================================
+    # LOCALIZAR CLIENTES E CONTAS META
+    # ========================================================
+
+    for client in clients:
+
+        client_id = client.get("id")
+
+        try:
+            connection = get_client_connection(
+                client_id,
+                include_token=True
+            )
+
+            if not connection:
+                continue
+
+            if connection.get("status") != "connected":
+                continue
+
+            access_token = connection.get(
+                "access_token"
+            )
+
+            if not access_token:
+                continue
+
+            selected_ids = get_selected_ad_account_ids(
+                client_id
+            )
+
+            if not selected_ids:
+                continue
+
+            meta_accounts = get_client_meta_ad_accounts(
+                access_token
+            )
+
+            for account in meta_accounts:
+
+                if account.get("id") not in selected_ids:
+                    continue
+
+                account = dict(account)
+
+                account["client_id"] = str(
+                    client_id
+                )
+
+                account["client_name"] = (
+                    client.get("name")
+                    or "Cliente sem nome"
+                )
+
+                connected_accounts.append(
+                    (
+                        account,
+                        access_token
+                    )
+                )
+
+        except Exception as exc:
+
+            errors += 1
+
+            print(
+                "ERRO AO PREPARAR CACHE DO CLIENTE "
+                f"{client_id}: {exc}"
+            )
+
+    # ========================================================
+    # ATUALIZAR META EM PARALELO
+    # ========================================================
+
+    def refresh_account(account, access_token):
+
+        nonlocal refreshed
+        nonlocal errors
+
+        account_id = account.get("id")
+        client_name = account.get(
+            "client_name",
+            "Cliente sem nome"
+        )
+
+        try:
+
+            print(
+                f"CRON META | ATUALIZANDO | "
+                f"{client_name} | {account_id}"
+            )
+
+            # ------------------------------------------------
+            # PERÍODO ATUAL
+            # ------------------------------------------------
+
+            current = get_account_insights(
+                account,
+                default_since,
+                default_until,
+                access_token
+            )
+
+            if not current.get("error"):
+
+                save_overview_cache(
+                    account["client_id"],
+                    account_id,
+                    default_since,
+                    default_until,
+                    current
+                )
+
+            else:
+
+                errors += 1
+
+                print(
+                    f"ERRO META ATUAL | "
+                    f"{client_name} | "
+                    f"{account_id}"
+                )
+
+            # ------------------------------------------------
+            # PERÍODO ANTERIOR
+            # ------------------------------------------------
+
+            previous = get_account_insights(
+                account,
+                previous_since,
+                previous_until,
+                access_token
+            )
+
+            if not previous.get("error"):
+
+                save_overview_cache(
+                    account["client_id"],
+                    account_id,
+                    previous_since,
+                    previous_until,
+                    previous
+                )
+
+            else:
+
+                errors += 1
+
+                print(
+                    f"ERRO META ANTERIOR | "
+                    f"{client_name} | "
+                    f"{account_id}"
+                )
+
+            refreshed += 1
+
+            print(
+                f"CRON META | CONCLUÍDO | "
+                f"{client_name} | {account_id}"
+            )
+
+        except Exception as exc:
+
+            errors += 1
+
+            print(
+                f"ERRO AO ATUALIZAR CACHE | "
+                f"{client_name} | "
+                f"{account_id}: {exc}"
+            )
+
+    with ThreadPoolExecutor(
+        max_workers=8
+    ) as executor:
+
+        futures = [
+            executor.submit(
+                refresh_account,
+                account,
+                access_token
+            )
+            for account, access_token
+            in connected_accounts
+        ]
+
+        for future in as_completed(futures):
+
+            try:
+                future.result()
+
+            except Exception as exc:
+
+                errors += 1
+
+                print(
+                    f"ERRO NO WORKER DO CACHE: {exc}"
+                )
+
+    return {
+        "success": True,
+        "refreshed": refreshed,
+        "errors": errors,
+        "since": default_since,
+        "until": default_until,
+        "previous_since": previous_since,
+        "previous_until": previous_until
+    }
+
+@app.route("/api/cron/refresh-overview", methods=["GET"])
+def cron_refresh_overview():
+
+    cron_secret = os.getenv("CRON_SECRET")
+
+    authorization = request.headers.get("Authorization", "")
+    expected_authorization = f"Bearer {cron_secret}"
+
+    if not cron_secret or authorization != expected_authorization:
+        return jsonify({
+            "success": False,
+            "error": "Unauthorized"
+        }), 401
+
+    try:
+
+        result = refresh_overview_cache()
+
+        return jsonify(result), 200
+
+    except Exception as exc:
+
+        print(f"ERRO CRON OVERVIEW: {exc}")
+
+        return jsonify({
+            "success": False,
+            "error": str(exc)
+        }), 500
 
 def get_previous_period(since, until):
     """Calcula o período imediatamente anterior com a mesma duração."""
@@ -1902,20 +2298,110 @@ def get_account_period_data(
     previous_since,
     previous_until
 ):
-    """Busca o período atual e o período anterior da mesma conta."""
-    current = get_account_insights(
-        account,
+    """
+    Busca os dados do período atual e anterior.
+
+    Primeiro verifica o cache no Supabase.
+    Somente consulta a Meta quando o cache
+    não existe ou já expirou.
+    """
+
+    client_id = account.get("client_id")
+    account_id = account.get("id")
+
+    # ========================================================
+    # PERÍODO ATUAL
+    # ========================================================
+
+    current_cache = get_overview_cache(
+        client_id,
+        account_id,
         since,
-        until,
-        access_token
+        until
     )
 
-    previous = get_account_insights(
-        account,
+    if current_cache:
+        print(
+            f"CACHE HIT | ATUAL | "
+            f"{account.get('client_name')} | "
+            f"{account_id} | "
+            f"{since} até {until}"
+        )
+
+        current = current_cache["data"]
+
+    else:
+        print(
+            f"CACHE MISS | ATUAL | "
+            f"{account.get('client_name')} | "
+            f"{account_id} | "
+            f"{since} até {until}"
+        )
+
+        current = get_account_insights(
+            account,
+            since,
+            until,
+            access_token
+        )
+
+        # Só salva no cache se a consulta
+        # retornou dados válidos.
+        if not current.get("error"):
+            save_overview_cache(
+                client_id,
+                account_id,
+                since,
+                until,
+                current
+            )
+
+    # ========================================================
+    # PERÍODO ANTERIOR
+    # ========================================================
+
+    previous_cache = get_overview_cache(
+        client_id,
+        account_id,
         previous_since,
-        previous_until,
-        access_token
+        previous_until
     )
+
+    if previous_cache:
+        print(
+            f"CACHE HIT | ANTERIOR | "
+            f"{account.get('client_name')} | "
+            f"{account_id} | "
+            f"{previous_since} até {previous_until}"
+        )
+
+        previous = previous_cache["data"]
+
+    else:
+        print(
+            f"CACHE MISS | ANTERIOR | "
+            f"{account.get('client_name')} | "
+            f"{account_id} | "
+            f"{previous_since} até {previous_until}"
+        )
+
+        previous = get_account_insights(
+            account,
+            previous_since,
+            previous_until,
+            access_token
+        )
+
+        # Só salva no cache se a consulta
+        # retornou dados válidos.
+        if not previous.get("error"):
+            save_overview_cache(
+                client_id,
+                account_id,
+                previous_since,
+                previous_until,
+                previous
+            )
 
     return current, previous
 

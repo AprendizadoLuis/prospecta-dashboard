@@ -1,0 +1,663 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Relatório | {{ client.name }} | Prospecte OS
+{% endblock %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/relatorio_cliente.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="client-report-page">
+
+    <!-- CABEÇALHO -->
+    <div class="client-report-topbar">
+        <div class="client-report-heading">
+            <a href="{{ url_for('relatorios') }}" class="client-report-back">
+                <i class="bi bi-arrow-left"></i>
+                Relatórios
+            </a>
+
+            <div class="client-report-client">
+                {% if client.avatar_url %}
+                    <img src="{{ client.avatar_url }}" alt="{{ client.name }}" class="client-report-avatar">
+                {% else %}
+                    <div class="client-report-avatar client-report-avatar-fallback">
+                        {{ client.name[0]|upper }}
+                    </div>
+                {% endif %}
+
+                <div>
+                    <h1>{{ client.name }}</h1>
+                    <p>{{ client.segment or "Relatório de desempenho" }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="client-report-manager">
+            <span>Gestor</span>
+            <strong>{{ client.responsible_name or "Não definido" }}</strong>
+        </div>
+    </div>
+
+    <!-- FILTROS -->
+    <section class="client-report-filter-panel">
+        <div class="client-report-filter-header">
+            <div>
+                <h2>Período do relatório</h2>
+                <p>Selecione o período para visualizar os resultados da campanha.</p>
+            </div>
+            <span class="client-report-period">{{ period_label }}</span>
+        </div>
+
+        <div class="client-report-filter-body">
+            <div class="quick-periods">
+                <button type="button" class="quick-period-button" data-period="current-month">Este mês</button>
+                <button type="button" class="quick-period-button" data-period="previous-month">Mês passado</button>
+                <button type="button" class="quick-period-button" data-period="15-days">Últimos 15 dias</button>
+            </div>
+
+            <form method="GET"
+                  action="{{ url_for('relatorio_cliente', client_id=client.id) }}"
+                  class="custom-period-form">
+                <div class="date-field">
+                    <label for="since">Data inicial</label>
+                    <input type="date" id="since" name="since" value="{{ since }}" required>
+                </div>
+
+                <span class="date-separator">até</span>
+
+                <div class="date-field">
+                    <label for="until">Data final</label>
+                    <input type="date" id="until" name="until" value="{{ until }}" required>
+                </div>
+
+                <button type="submit" class="generate-report-button">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Gerar relatório
+                </button>
+            </form>
+        </div>
+    </section>
+
+    <!-- STATUS META -->
+    {% if meta_status == "not_connected" %}
+        <div class="report-alert report-alert-warning">
+            <i class="bi bi-link-45deg"></i>
+            <div>
+                <strong>Meta Ads não conectada</strong>
+                <span>Conecte a conta deste cliente para visualizar os dados.</span>
+            </div>
+        </div>
+    {% elif meta_status == "no_account" %}
+        <div class="report-alert report-alert-warning">
+            <i class="bi bi-megaphone"></i>
+            <div>
+                <strong>Nenhuma conta de anúncio selecionada</strong>
+                <span>Selecione uma conta Meta Ads para gerar o relatório.</span>
+            </div>
+        </div>
+    {% elif meta_status == "error" %}
+        <div class="report-alert report-alert-error">
+            <i class="bi bi-exclamation-circle"></i>
+            <div>
+                <strong>Erro ao carregar dados</strong>
+                <span>{{ meta_error or "Não foi possível carregar os dados da Meta." }}</span>
+            </div>
+        </div>
+    {% endif %}
+
+    {% if meta_status == "connected" %}
+
+    <!-- RESUMO EXECUTIVO -->
+    <section class="client-report-section">
+        <div class="client-report-section-header">
+            <div>
+                <h2>Resultado do período</h2>
+                <p>Visão executiva dos principais indicadores da mídia paga.</p>
+            </div>
+            <span class="section-period">{{ period_label }}</span>
+        </div>
+
+        <div class="report-kpi-grid report-kpi-grid-main">
+
+            <div class="report-kpi-card">
+                <div class="report-kpi-icon"><i class="bi bi-wallet2"></i></div>
+                <div class="report-kpi-content">
+                    <span>Investimento</span>
+                    <strong>R$ {{ "%.2f"|format(metrics.get("spend", 0))|replace(".", ",") }}</strong>
+                    {% set c = comparison.get("spend", {}) %}
+                    {% if c.get("percentage") is not none %}
+                        <small class="{{ 'positive' if c.get('percentage', 0) <= 0 else 'negative' }}">
+                            <i class="bi bi-{{ 'arrow-down' if c.get('percentage', 0) <= 0 else 'arrow-up' }}"></i>
+                            {{ "%.1f"|format(c.get("percentage", 0)|abs)|replace(".", ",") }}% vs. período anterior
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="report-kpi-card">
+                <div class="report-kpi-icon"><i class="bi bi-chat-dots"></i></div>
+                <div class="report-kpi-content">
+                    <span>Conversas</span>
+                    <strong>{{ "{:,}".format(metrics.get("conversations", 0)|int).replace(",", ".") }}</strong>
+                    {% set c = comparison.get("conversations", {}) %}
+                    {% if c.get("percentage") is not none %}
+                        <small class="{{ 'positive' if c.get('percentage', 0) >= 0 else 'negative' }}">
+                            <i class="bi bi-{{ 'arrow-up' if c.get('percentage', 0) >= 0 else 'arrow-down' }}"></i>
+                            {{ "%.1f"|format(c.get("percentage", 0)|abs)|replace(".", ",") }}% vs. período anterior
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="report-kpi-card">
+                <div class="report-kpi-icon"><i class="bi bi-cash-coin"></i></div>
+                <div class="report-kpi-content">
+                    <span>Custo por conversa</span>
+                    <strong>R$ {{ "%.2f"|format(metrics.get("cost_per_conversation", 0))|replace(".", ",") }}</strong>
+                    {% set c = comparison.get("cost_per_conversation", {}) %}
+                    {% if c.get("percentage") is not none %}
+                        <small class="{{ 'positive' if c.get('percentage', 0) <= 0 else 'negative' }}">
+                            <i class="bi bi-{{ 'arrow-down' if c.get('percentage', 0) <= 0 else 'arrow-up' }}"></i>
+                            {{ "%.1f"|format(c.get("percentage", 0)|abs)|replace(".", ",") }}% vs. período anterior
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="report-kpi-card">
+                <div class="report-kpi-icon"><i class="bi bi-eye"></i></div>
+                <div class="report-kpi-content">
+                    <span>Impressões</span>
+                    <strong>{{ "{:,}".format(metrics.get("impressions", 0)|int).replace(",", ".") }}</strong>
+                    {% set c = comparison.get("impressions", {}) %}
+                    {% if c.get("percentage") is not none %}
+                        <small class="{{ 'positive' if c.get('percentage', 0) >= 0 else 'negative' }}">
+                            <i class="bi bi-{{ 'arrow-up' if c.get('percentage', 0) >= 0 else 'arrow-down' }}"></i>
+                            {{ "%.1f"|format(c.get("percentage", 0)|abs)|replace(".", ",") }}% vs. período anterior
+                        </small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="report-kpi-grid report-kpi-grid-secondary">
+            <div class="mini-kpi">
+                <span>Alcance</span>
+                <strong>{{ "{:,}".format(metrics.get("reach", 0)|int).replace(",", ".") }}</strong>
+            </div>
+            <div class="mini-kpi">
+                <span>Cliques</span>
+                <strong>{{ "{:,}".format(metrics.get("clicks", 0)|int).replace(",", ".") }}</strong>
+            </div>
+            <div class="mini-kpi">
+                <span>CTR</span>
+                <strong>{{ "%.2f"|format(metrics.get("ctr", 0))|replace(".", ",") }}%</strong>
+            </div>
+            <div class="mini-kpi">
+                <span>CPM</span>
+                <strong>R$ {{ "%.2f"|format(metrics.get("cpm", 0))|replace(".", ",") }}</strong>
+            </div>
+            <div class="mini-kpi">
+                <span>Frequência</span>
+                <strong>{{ "%.2f"|format(metrics.get("frequency", 0))|replace(".", ",") }}</strong>
+            </div>
+            <div class="mini-kpi">
+                <span>Compartilhamentos</span>
+                <strong>{{ "{:,}".format(metrics.get("shares", 0)|int).replace(",", ".") }}</strong>
+            </div>
+        </div>
+    </section>
+
+    <!-- EVOLUÇÃO -->
+    <section class="client-report-section">
+        <div class="client-report-section-header">
+            <div>
+                <h2>Evolução dos resultados</h2>
+                <p>Acompanhe diariamente investimento e conversas geradas.</p>
+            </div>
+        </div>
+
+        <div class="chart-card chart-card-large">
+            <div class="chart-toolbar">
+                <div>
+                    <strong>Investimento x Conversas</strong>
+                    <span>Desempenho diário no período selecionado</span>
+                </div>
+            </div>
+            <div class="chart-wrap chart-wrap-large">
+                <canvas id="dailyChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <!-- CAMPANHAS -->
+    <section class="client-report-section">
+        <div class="client-report-section-header">
+            <div>
+                <h2>Campanhas</h2>
+                <p>Principais campanhas ordenadas por resultado.</p>
+            </div>
+        </div>
+
+        <div class="report-table-card">
+            {% if campaigns %}
+            <div class="report-table-scroll">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Campanha</th>
+                            <th>Investimento</th>
+                            <th>Impressões</th>
+                            <th>Cliques</th>
+                            <th>Conversas</th>
+                            <th>Custo/conversa</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for campaign in campaigns %}
+                        <tr>
+                            <td>
+                                <div class="table-primary">{{ campaign.get("name", "Sem nome") }}</div>
+                                {% if campaign.get("campaign_id") or campaign.get("id") %}
+                                    <div class="table-secondary">{{ campaign.get("campaign_id") or campaign.get("id") }}</div>
+                                {% endif %}
+                            </td>
+                            <td>R$ {{ "%.2f"|format(campaign.get("spend", 0))|replace(".", ",") }}</td>
+                            <td>{{ "{:,}".format(campaign.get("impressions", 0)|int).replace(",", ".") }}</td>
+                            <td>{{ "{:,}".format(campaign.get("clicks", 0)|int).replace(",", ".") }}</td>
+                            <td><strong>{{ campaign.get("conversations", 0)|int }}</strong></td>
+                            <td>R$ {{ "%.2f"|format(campaign.get("cost_per_conversation", 0))|replace(".", ",") }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                <div class="empty-report">Nenhuma campanha encontrada no período.</div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- ANÚNCIOS -->
+    <section class="client-report-section">
+        <div class="client-report-section-header">
+            <div>
+                <h2>Anúncios</h2>
+                <p>Desempenho dos criativos que receberam investimento.</p>
+            </div>
+        </div>
+
+        <div class="report-ads-grid">
+            {% if ads %}
+                {% for ad in ads %}
+                <article class="report-ad-card">
+                    <div class="report-ad-media">
+                        {% if ad.get("thumbnail_url") or ad.get("image_url") %}
+                            <img src="{{ ad.get('thumbnail_url') or ad.get('image_url') }}"
+                                 alt="{{ ad.get('name', 'Criativo') }}"
+                                 loading="lazy">
+                        {% else %}
+                            <div class="report-ad-placeholder">
+                                <i class="bi bi-image"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="report-ad-body">
+                        <span class="ad-label">ANÚNCIO</span>
+                        <h3>{{ ad.get("name", "Sem nome") }}</h3>
+                        <p>{{ ad.get("adset_name", "Conjunto não informado") }}</p>
+
+                        <div class="ad-stats">
+                            <div>
+                                <span>Investimento</span>
+                                <strong>R$ {{ "%.2f"|format(ad.get("spend", 0))|replace(".", ",") }}</strong>
+                            </div>
+                            <div>
+                                <span>Conversas</span>
+                                <strong>{{ ad.get("conversations", 0)|int }}</strong>
+                            </div>
+                            <div>
+                                <span>Custo/conversa</span>
+                                <strong>R$ {{ "%.2f"|format(ad.get("cost_per_conversation", 0))|replace(".", ",") }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-report">Nenhum anúncio encontrado no período.</div>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- DEMOGRAFIA E PLATAFORMAS -->
+    <section class="report-two-column">
+        <div class="client-report-section report-half-section">
+            <div class="client-report-section-header">
+                <div>
+                    <h2>Perfil do público</h2>
+                    <p>Distribuição das conversas por faixa etária.</p>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-wrap">
+                    <canvas id="ageChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="client-report-section report-half-section">
+            <div class="client-report-section-header">
+                <div>
+                    <h2>Gênero</h2>
+                    <p>Distribuição das conversas por gênero.</p>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-wrap">
+                    <canvas id="genderChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="client-report-section">
+        <div class="client-report-section-header">
+            <div>
+                <h2>Plataformas</h2>
+                <p>Origem das conversas entre Instagram e Facebook.</p>
+            </div>
+        </div>
+
+        {% set instagram = platforms.get("instagram", 0) %}
+        {% set facebook = platforms.get("facebook", 0) %}
+        {% set platform_total = instagram + facebook %}
+
+        <div class="platform-card">
+            <div class="platform-item">
+                <div class="platform-icon instagram"><i class="bi bi-instagram"></i></div>
+                <div class="platform-info">
+                    <div>
+                        <strong>Instagram</strong>
+                        <span>{{ instagram|int }} conversas</span>
+                    </div>
+                    <div class="platform-value">
+                        {{ "%.1f"|format((instagram / platform_total * 100) if platform_total else 0)|replace(".", ",") }}%
+                    </div>
+                </div>
+                <div class="platform-bar">
+                    <span style="width: {{ ((instagram / platform_total * 100) if platform_total else 0)|round(2) }}%"></span>
+                </div>
+            </div>
+
+            <div class="platform-item">
+                <div class="platform-icon facebook"><i class="bi bi-facebook"></i></div>
+                <div class="platform-info">
+                    <div>
+                        <strong>Facebook</strong>
+                        <span>{{ facebook|int }} conversas</span>
+                    </div>
+                    <div class="platform-value">
+                        {{ "%.1f"|format((facebook / platform_total * 100) if platform_total else 0)|replace(".", ",") }}%
+                    </div>
+                </div>
+                <div class="platform-bar">
+                    <span style="width: {{ ((facebook / platform_total * 100) if platform_total else 0)|round(2) }}%"></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- VÍDEOS -->
+    <section class="client-report-section">
+        <div class="client-report-section-header">
+            <div>
+                <h2>Retenção de vídeos</h2>
+                <p>Visualizações acumuladas em cada etapa do vídeo.</p>
+            </div>
+        </div>
+
+        {% set v3 = video.get("video_3s", 0) %}
+        {% set v25 = video.get("video_25", 0) %}
+        {% set v50 = video.get("video_50", 0) %}
+        {% set v75 = video.get("video_75", 0) %}
+        {% set v95 = video.get("video_95", 0) %}
+        {% set video_max = [v3, v25, v50, v75, v95]|max %}
+
+        <div class="video-retention-card">
+            {% for label, value in [("3 segundos", v3), ("25%", v25), ("50%", v50), ("75%", v75), ("95%", v95)] %}
+            <div class="video-stage">
+                <div class="video-stage-label">
+                    <span>{{ label }}</span>
+                    <strong>{{ "{:,}".format(value|int).replace(",", ".") }}</strong>
+                </div>
+                <div class="video-stage-track">
+                    <span style="width: {{ ((value / video_max * 100) if video_max else 0)|round(2) }}%"></span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- ANÁLISE -->
+    <section class="client-report-section">
+        <div class="client-report-section-header">
+            <div>
+                <h2>Análise do período</h2>
+                <p>Espaço para registrar os principais aprendizados e próximos passos.</p>
+            </div>
+        </div>
+
+        <div class="analysis-grid">
+            <div class="analysis-card">
+                <div class="analysis-card-icon"><i class="bi bi-graph-up-arrow"></i></div>
+                <div>
+                    <h3>Principais resultados</h3>
+                    <p>
+                        No período de <strong>{{ since }}</strong> a <strong>{{ until }}</strong>,
+                        foram investidos <strong>R$ {{ "%.2f"|format(metrics.get("spend", 0))|replace(".", ",") }}</strong>,
+                        gerando <strong>{{ metrics.get("conversations", 0)|int }}</strong> conversas.
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis-card">
+                <div class="analysis-card-icon"><i class="bi bi-lightbulb"></i></div>
+                <div>
+                    <h3>Leitura estratégica</h3>
+                    <p>
+                        Use este espaço para registrar quais campanhas, anúncios, públicos ou mensagens
+                        apresentaram melhor desempenho e quais pontos devem ser otimizados no próximo ciclo.
+                    </p>
+                </div>
+            </div>
+
+            <div class="analysis-card">
+                <div class="analysis-card-icon"><i class="bi bi-check2-circle"></i></div>
+                <div>
+                    <h3>Próximos passos</h3>
+                    <p>
+                        Recomenda-se revisar os criativos com menor eficiência, manter os conjuntos
+                        com melhor custo por resultado e testar novas variações de comunicação.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const sinceInput = document.getElementById("since");
+    const untilInput = document.getElementById("until");
+    const buttons = document.querySelectorAll(".quick-period-button");
+
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    }
+
+    if (sinceInput && untilInput) {
+        buttons.forEach(function (button) {
+            button.addEventListener("click", function () {
+                const period = button.dataset.period;
+                const today = new Date();
+                let since;
+                let until;
+
+                if (period === "current-month") {
+                    since = new Date(today.getFullYear(), today.getMonth(), 1);
+                    until = today;
+                } else if (period === "previous-month") {
+                    since = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                    until = new Date(today.getFullYear(), today.getMonth(), 0);
+                } else if (period === "15-days") {
+                    since = new Date(today);
+                    since.setDate(today.getDate() - 14);
+                    until = today;
+                }
+
+                sinceInput.value = formatDate(since);
+                untilInput.value = formatDate(until);
+                sinceInput.closest("form").submit();
+            });
+        });
+    }
+
+    const reportDaily = {{ daily|default([])|tojson }};
+    const reportDemographics = {{ demographics|default({"age": [], "gender": []})|tojson }};
+
+    function numberBR(value) {
+        return new Intl.NumberFormat("pt-BR").format(Number(value || 0));
+    }
+
+    function createChart(id, config) {
+        const element = document.getElementById(id);
+        if (!element || typeof Chart === "undefined") return null;
+        return new Chart(element.getContext("2d"), config);
+    }
+
+    const dailyLabels = reportDaily.map(item => {
+        const parts = String(item.date || "").split("-");
+        return parts.length === 3 ? `${parts[2]}/${parts[1]}` : item.date;
+    });
+
+    createChart("dailyChart", {
+        type: "line",
+        data: {
+            labels: dailyLabels,
+            datasets: [
+                {
+                    label: "Investimento",
+                    data: reportDaily.map(item => Number(item.spend || 0)),
+                    borderWidth: 2,
+                    tension: 0.35,
+                    yAxisID: "money"
+                },
+                {
+                    label: "Conversas",
+                    data: reportDaily.map(item => Number(item.conversations || 0)),
+                    borderWidth: 2,
+                    tension: 0.35,
+                    yAxisID: "results"
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: "index", intersect: false },
+            plugins: {
+                legend: { position: "top" },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw || 0;
+                            return context.dataset.label === "Investimento"
+                                ? ` ${context.dataset.label}: R$ ${Number(value).toFixed(2).replace(".", ",")}`
+                                : ` ${context.dataset.label}: ${numberBR(value)}`;
+                        }
+                    }
+                }
+            },
+            scales: {
+                money: {
+                    type: "linear",
+                    position: "left",
+                    beginAtZero: true,
+                    ticks: {
+                        callback: value => `R$ ${Number(value).toFixed(0)}`
+                    }
+                },
+                results: {
+                    type: "linear",
+                    position: "right",
+                    beginAtZero: true,
+                    grid: { drawOnChartArea: false }
+                }
+            }
+        }
+    });
+
+    const ageItems = Array.isArray(reportDemographics.age) ? reportDemographics.age : [];
+    const genderItems = Array.isArray(reportDemographics.gender) ? reportDemographics.gender : [];
+
+    createChart("ageChart", {
+        type: "bar",
+        data: {
+            labels: ageItems.map(item => item.label),
+            datasets: [{
+                label: "Conversas",
+                data: ageItems.map(item => Number(item.value || 0)),
+                borderWidth: 0,
+                borderRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { precision: 0 }
+                }
+            }
+        }
+    });
+
+    createChart("genderChart", {
+        type: "doughnut",
+        data: {
+            labels: genderItems.map(item => item.label),
+            datasets: [{
+                data: genderItems.map(item => Number(item.value || 0)),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "66%",
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
